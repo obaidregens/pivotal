@@ -1,0 +1,78 @@
+# pivotal
+
+Topic view over all your Claude Code conversations, with a "continue" launcher.
+
+## Install
+
+```sh
+bash ~/Workspace/pivotal/install.sh
+```
+
+Checks deps (bun, fzf, claude), discovers an OpenAI API key (env or dotfiles) or
+lets you paste one, and picks the LLM provider:
+
+- **OpenAI key found** → GPT-5.6 Luna ($0.20/$1.20 per 1M tok, ~15× cheaper than
+  Sonnet input) — installer prints the exact savings and resolves the model ID
+  live from the API.
+- **No key** → Claude Sonnet via the `claude` CLI (zero extra setup).
+
+Provider config lives in `~/.claude/cache/pivotal/config.json` (chmod 600; key
+stored only if you pasted it — env-discovered keys are referenced, not copied).
+OpenAI failures automatically fall back to Claude mid-run.
+
+```
+bun ~/Workspace/pivotal/pivotal.ts          # interactive arrow-select menu
+bun ~/Workspace/pivotal/pivotal.ts list     # print topics table
+bun ~/Workspace/pivotal/pivotal.ts blurb <slug>   # print a topic's context blurb
+bun ~/Workspace/pivotal/pivotal.ts rebuild  # drop caches, reclassify everything
+```
+
+## Shell integration (installed by default via ~/.zshrc)
+
+`pivotal.zsh` is sourced from `~/.zshrc` and provides:
+
+- **Down-arrow on an empty command line** → fzf topic selector with blurb preview.
+  Down-arrow with text in the buffer still does normal history.
+  Opt out by setting `PIVOTAL_BIND_UP=0` before the `source` line.
+- **Ctrl+T** → same selector, always.
+- `cct` alias → `bun ~/Workspace/pivotal/pivotal.ts`.
+
+Enter on a topic runs `cct continue <slug>`: refreshes incrementally, builds or
+loads the cached blurb, and starts `claude` in that topic's project directory
+with the blurb as the opening prompt. The selector itself is cache-only
+(`list-cached` / `preview`) — instant, zero LLM calls.
+
+## How it stays token-efficient and up to date
+
+1. **Local digest stage (no LLM).** Every session `.jsonl` under `~/.claude/projects` is
+   parsed locally into a small digest: real user prompts (first + last few, truncated),
+   the final assistant reply, project dir, timestamps. Cached by file mtime in
+   `~/.claude/cache/pivotal/digests.json` — unchanged sessions are never re-read.
+   (~760MB of transcripts → ~1.6MB of digests.)
+2. **Incremental topic classification.** Only new/changed digests are sent to
+   `claude -p --model haiku`, in chunks, with the existing topic list included so topics
+   stay stable. One session can belong to multiple topics. Saved per chunk, so it's
+   interruptible and resumes where it left off.
+3. **Cached continuation blurbs.** Selecting a topic compresses its most recent session
+   digests into a <400-word briefing (haiku, cached by member-session hash — only
+   regenerated when the topic has new activity), then launches a fresh `claude` session
+   in the topic's main project directory with that briefing as the opening prompt.
+
+Every run refreshes incrementally first, so the menu is always current; a run with no
+new sessions costs zero LLM tokens.
+
+## Live updates (pivotal plugin)
+
+The installer registers a Claude Code **Stop hook** via the `pivotal`
+plugin (canonical path; falls back to a tagged `settings.json` entry when the
+plugin CLI is unavailable). After every Claude reply in any session:
+
+- `touch` — re-digests just that session (local, ~ms, zero tokens) and stamps activity
+- a single debounced `settle` process waits for 90s of quiet, then runs one warm:
+  classify new sessions + rebuild only the affected briefings
+
+A burst of messages costs one LLM pass, not N. Remove cleanly with:
+
+```sh
+bash install.sh --uninstall-hook
+```

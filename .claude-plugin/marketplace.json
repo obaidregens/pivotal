@@ -1,0 +1,11 @@
+{
+  "name": "pivotal",
+  "owner": { "name": "obaid" },
+  "plugins": [
+    {
+      "name": "pivotal",
+      "source": "./plugin",
+      "description": "Live topic knowledge base over your Claude Code history"
+    }
+  ]
+}

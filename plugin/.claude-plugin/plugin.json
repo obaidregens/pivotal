@@ -1,0 +1,6 @@
+{
+  "name": "pivotal",
+  "description": "Live topic knowledge base over your Claude Code history — updates after every reply via Stop hook",
+  "version": "1.0.0",
+  "author": { "name": "obaid" }
+}
