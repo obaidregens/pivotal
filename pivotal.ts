@@ -1063,9 +1063,11 @@ if (cmd === "list") {
 } else if (cmd === "continue") {
   const r = rows.find((x) => x.slug === process.argv[3]);
   if (!r) {
-    console.error(`pivotal: unknown topic "${process.argv[3] ?? ""}" — run \`cct list\` to see topics.`);
+    stopSpinner();
+    console.error(`pivotal: unknown topic "${process.argv[3] ?? ""}" — run \`pivotal list\` to see topics.`);
     process.exit(1);
   }
+  setSpinner(`preparing “${r.title}”`);
   let blurb: string;
   try {
     blurb = await buildBlurb(r, digests, true); // staleOk: instant launch, refresh in background
