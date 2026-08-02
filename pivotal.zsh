@@ -46,7 +46,7 @@ _pivotal-pick() {
   # (kick-reanalyze / attach-progress / push-progress), which inherits $FZF_PORT.
   pick=$(bun "$PIVOTAL_SCRIPT" list-cached 2>/dev/null | FZF_DEFAULT_OPTS='' FZF_DEFAULT_OPTS_FILE='' fzf \
     --read0 --highlight-line --gap 1 --wrap=word --wrap-sign '  ' --no-info \
-    --pointer '❯' \
+    --pointer ' ' \
     --color 'bg+:-1,fg+:173,pointer:173,hl:173,hl+:208,gutter:-1' \
     --height 70% --min-height 18 --reverse --no-sort --ansi \
     --delimiter '\t' --with-nth 2 --listen \
