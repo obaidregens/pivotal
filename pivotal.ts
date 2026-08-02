@@ -265,15 +265,16 @@ const metric = (stage: string, data: Record<string, unknown>) => {
 const tokEst = (s: string) => Math.round(s.length / 4);
 
 // ---------- LLM helper ----------
-type LLMReply = { text: string; model: string };
+type LLMReply = { text: string; model: string; usage?: { inTok: number; outTok: number } };
 async function askLLM(prompt: string, stage = "llm"): Promise<LLMReply> {
   const t0 = performance.now();
   const reply = await askLLMInner(prompt);
   metric(stage, {
     ms: Math.round(performance.now() - t0),
     model: reply.model,
-    inTok: tokEst(prompt),
-    outTok: tokEst(reply.text),
+    inTok: reply.usage?.inTok ?? tokEst(prompt),
+    outTok: reply.usage?.outTok ?? tokEst(reply.text),
+    est: !reply.usage, // true = chars/4 estimate, false = real API usage
   });
   return reply;
 }
@@ -288,7 +289,15 @@ async function askLLMInner(prompt: string): Promise<LLMReply> {
     if (res.ok) {
       const data: any = await res.json();
       const text = data.choices?.[0]?.message?.content?.trim();
-      if (text) return { text, model: displayModel(model) };
+      if (text)
+        return {
+          text,
+          model: displayModel(model),
+          // real token counts from the API beat chars/4 estimates in metrics
+          usage: data.usage
+            ? { inTok: data.usage.prompt_tokens ?? 0, outTok: data.usage.completion_tokens ?? 0 }
+            : undefined,
+        };
     }
     process.stderr.write(`openai call failed (${res.status}) — falling back to claude\n`);
   }
@@ -969,7 +978,7 @@ if (cmd === "list") {
   }
   writeFileSync(join(CACHE_DIR, "warm-stamp"), String(Date.now()));
   clearProgress();
-  metric(`run-${cmd}`, { ms: Math.round(performance.now() - RUN_T0), sessions: Object.keys(digests).length, topics: rows.length, briefingsRebuilt: built });
+  metric(`run-${cmd}`, { ms: Math.round(performance.now() - RUN_T0), sessions: Object.keys(digests).length, topics: rows.length, briefingsRebuilt: built, cold: cmd === "reanalyze" || built === rows.length });
   process.stderr.write(`done: ${built} briefings rebuilt, ${rows.length - built} already fresh\n`);
 } else if (cmd === "merge") {
   // re-run duplicate-topic collapse — for when a parallel backfill leaves near-dupes
