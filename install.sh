@@ -41,8 +41,12 @@ note() { printf '  %s\n' "$*"; }
 dim()  { printf '  \033[90m%s\033[0m\n' "$*"; }  # light gray — secondary info
 
 welcome() {  # first-contact banner — nothing installed, no cache yet
+  local w line
+  w=$(( ${COLUMNS:-$(tput cols 2>/dev/null || echo 100)} - 2 ))
+  (( w > 90 )) && w=90
   printf '\n  \033[1;38;5;173mpivotal\033[0m\n\n'
-  note "a new model for agent harnesses: works with claude code, but everything you do is categorized into topics — instead of directories and chat sessions."
+  fold -s -w "$w" <<< "a new model for agent harnesses: works with claude code, but everything you do is categorized into topics — instead of directories and chat sessions." \
+    | while IFS= read -r line; do note "$line"; done
   dim "an experiment, so far."
   printf '\n'
 }
