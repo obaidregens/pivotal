@@ -560,7 +560,7 @@ Reply with ONLY JSON mapping duplicate slug -> canonical slug (pick the topic wi
 }
 
 async function refresh(): Promise<{ digests: DigestCache; topics: TopicsCache }> {
-  process.stderr.write("scanning sessions…\n");
+  if (cmd !== "continue") process.stderr.write("scanning sessions…\n");
   const { digests, changed } = updateDigests();
   const topics = loadJson<TopicsCache>(TOPICS_PATH, { topics: {}, sessionTopics: {} });
   for (const sid of Object.keys(topics.sessionTopics))

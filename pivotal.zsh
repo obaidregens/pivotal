@@ -121,20 +121,18 @@ if [[ ${PIVOTAL_NOBIND:-0} != 1 ]]; then
   fi
 fi
 
-# badge (PIVOTAL_NO_HINT=1 to silence): orange chip, white text, pinned to the
-# right-side prompt. RPROMPT re-renders with every prompt, so it survives
-# Cmd+K / Ctrl+L / clear — a printed hint doesn't (scrollback is erasable).
-if [[ ${PIVOTAL_NO_HINT:-0} != 1 && ${PIVOTAL_NOBIND:-0} != 1 && -o interactive ]]; then
+# fresh-terminal hint (PIVOTAL_NO_HINT=1 to silence): concise, right-aligned,
+# orange bold. Shows the real key if down-arrow binding is off.
+if [[ ${PIVOTAL_NO_HINT:-0} != 1 && ${PIVOTAL_NOBIND:-0} != 1 && -o interactive ]] && [[ -t 1 ]]; then
   if [[ ${PIVOTAL_BIND_DOWN:-1} == 1 ]]; then
-    _pivotal_badge="%K{173}%F{231}%B pivotal ❯ ↓ %b%f%k"
+    _pivotal_hint="pivotal ↓ down arrow to see topics"
   else
-    _pivotal_badge="%K{173}%F{231}%B pivotal ❯ ⌃T %b%f%k"
+    _pivotal_hint="pivotal ⌃T to see topics"
   fi
-  # append (don't clobber an existing RPROMPT); guard against double-sourcing
-  if [[ ${RPROMPT-} != *pivotal* ]]; then
-    RPROMPT="${RPROMPT:+$RPROMPT }$_pivotal_badge"
-  fi
-  unset _pivotal_badge
+  _pivotal_pad=$(( ${COLUMNS:-80} - ${#_pivotal_hint} - 3 ))  # chip adds one space each side
+  (( _pivotal_pad < 0 )) && _pivotal_pad=0
+  printf '%*s\033[1;48;5;173;38;5;231m %s \033[0m\n' "$_pivotal_pad" '' "$_pivotal_hint"
+  unset _pivotal_hint _pivotal_pad
 fi
 
 # keep blurbs fresh in background so continue is instant + token-free at open
