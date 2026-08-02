@@ -4,9 +4,25 @@ Topic view over all your Claude Code conversations, with a "continue" launcher.
 
 ## Install
 
+Production (one-off — downloads and sets up the app at `~/.local/share/pivotal`):
+
 ```sh
-bash ~/Workspace/pivotal/install.sh
+curl -fsSL https://raw.githubusercontent.com/obaidregens/pivotal/main/install.sh | bash
+# (repo currently private — until it's public, use:)
+gh repo clone obaidregens/pivotal /tmp/pivotal && bash /tmp/pivotal/install.sh
 ```
+
+Development (clone anywhere; every edit is live immediately):
+
+```sh
+git clone https://github.com/obaidregens/pivotal.git && cd pivotal
+bash install.sh --dev
+```
+
+`install.sh` is checkout-aware: run from inside a clone it offers dev mode and
+uses the clone as the install source; run standalone it bootstrap-clones the
+repo and installs production. It also detects dev wiring and offers to unwire
+it (never deleting the checkout) before installing production.
 
 Checks deps (bun, fzf, claude), discovers an OpenAI API key (env or dotfiles) or
 lets you paste one, and picks the LLM provider:

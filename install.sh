@@ -18,7 +18,24 @@ PROD_DIR="$HOME/.local/share/pivotal"
 CACHE_DIR="$HOME/.claude/cache/pivotal"
 CONFIG="$CACHE_DIR/config.json"
 SETTINGS="$HOME/.claude/settings.json"
+REPO_URL="https://github.com/obaidregens/pivotal.git"
 mkdir -p "$CACHE_DIR"
+
+# Am I running inside the dev project (a clone), or as a standalone one-off
+# (e.g. curl | bash)? Dev mode is only offered from inside a real checkout;
+# a one-off bootstrap-clones the repo and installs production from it.
+IN_CHECKOUT=0
+[ -f "$DIR/pivotal.ts" ] && [ -d "$DIR/plugin" ] && IN_CHECKOUT=1
+
+bootstrap_clone() {  # sets DIR to a fresh shallow clone
+  command -v git >/dev/null || { echo "git required for bootstrap install"; exit 1; }
+  local tmp
+  tmp="$(mktemp -d)"
+  say "fetching pivotal…"
+  git clone -q --depth 1 "$REPO_URL" "$tmp/pivotal" || { echo "clone failed: $REPO_URL"; exit 1; }
+  DIR="$tmp/pivotal"
+  note "cloned to temporary staging (removed after install)"
+}
 
 say()  { printf '\033[1m%s\033[0m\n' "$*"; }
 note() { printf '  %s\n' "$*"; }
@@ -273,7 +290,17 @@ if [ "${1:-}" = "--uninstall-hook" ]; then
   remove_hook; note "Stop hook removed."; exit 0
 fi
 if [ "${1:-}" = "--dev" ]; then
-  dev_install; exit 0
+  if [ "$IN_CHECKOUT" = 1 ]; then
+    dev_install; exit 0
+  fi
+  echo "--dev requires running install.sh from inside a cloned checkout:"
+  echo "  git clone $REPO_URL && cd pivotal && bash install.sh --dev"
+  exit 1
+fi
+
+# one-off invocation (no project files beside install.sh): fetch the app first
+if [ "$IN_CHECKOUT" = 0 ]; then
+  bootstrap_clone
 fi
 
 WIRED="$(wired_zsh_path || true)"
