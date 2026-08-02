@@ -4,12 +4,12 @@
 
 ---
 
-thesis: claude code is being used for a lot more than coding now. I do everything from learning and research to connecting mcps and handling my mail.
+_thesis: claude code is being used for a lot more than coding now. I do everything from learning and research to connecting mcps and handling my mail.
 
 and the assumed model of project directories and chat sessions with fresh contexts has become limiting enough for me that I've almost considered breaking claude code to roll my own harness. almost.
 
 but thus far, I'm choosing to keep and extend it as much as possible until I run into a wall.
-
+_
 ---
 
 `pivotal` is a new take on the model, 
