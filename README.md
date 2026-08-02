@@ -28,6 +28,10 @@ i've worked extremely carefully myself to make the UX as delightful and simple a
  
 ## Install
 
+everything is handled by `install.sh`, first time it runs it will walk you through the installation, and the next time it will detect your set up and give you configuration options as well as cleanly uninstalling or changing from prod to dev mode.
+
+<img width="656" height="233" alt="Screenshot 2026-08-02 at 3 41 55 PM" src="https://github.com/user-attachments/assets/806ee214-35e3-4428-94e3-efdf9c7c0595" />
+
 Production (one-off — downloads and sets up the app at `~/.local/share/pivotal`):
 
 ```sh
