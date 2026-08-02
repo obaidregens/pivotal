@@ -51,6 +51,7 @@ type Digest = {
   lastAssistant: string;
   title?: string; // Claude Code's own ai-title for the session (free, high quality)
   path?: string; // transcript file — direct read is the fastest way to the full conversation
+  compactSummary?: string; // cleaned+capped mid-session compaction summary (long sessions only)
 };
 type DigestCache = Record<string, Digest>; // key: sessionId
 type Topic = { slug: string; title: string; description: string };
@@ -156,6 +157,21 @@ const isInternalSession = (firstPrompt: string) =>
 // first prompt injected by launch() into continued sessions — single source of truth
 const BRIEFING_PREFIX = "Context from my previous Claude Code sessions on topic";
 
+// Compaction summaries are rich mid-session handoff docs Claude writes for
+// long sessions — they cover the middle our first/last-prompt excerpts miss.
+// Strip the continuation boilerplate, keep the value-first sections, cap so a
+// 29k-char summary can't dominate downstream prompts.
+const COMPACT_CAP = 2500;
+function cleanCompactSummary(t: string): string {
+  let s = t.trim();
+  // boilerplate preamble ends at the "Summary:" marker when present
+  const m = s.match(/^This session is being continued[\s\S]{0,400}?Summary:\s*/);
+  if (m) s = s.slice(m[0].length);
+  else s = s.replace(/^This session is being continued[^\n]*\n+/, "");
+  s = s.replace(/\n{3,}/g, "\n\n").trim();
+  return s.length > COMPACT_CAP ? s.slice(0, COMPACT_CAP) + "…" : s;
+}
+
 // ---------- stage 1: digests ----------
 function extractDigest(file: string, id: string, mtimeMs: number): Digest | null {
   let project = "";
@@ -163,6 +179,7 @@ function extractDigest(file: string, id: string, mtimeMs: number): Digest | null
   const prompts: string[] = [];
   let lastAssistant = "";
   let title = "";
+  let compactSummary = "";
   let lines: string[];
   try { lines = readFileSync(file, "utf8").split("\n"); } catch { return null; }
   for (const line of lines) {
@@ -173,6 +190,12 @@ function extractDigest(file: string, id: string, mtimeMs: number): Digest | null
     if (e.cwd && !project) project = e.cwd;
     if (e.timestamp) { if (!start) start = e.timestamp; end = e.timestamp; }
     if (e.type === "ai-title" && e.aiTitle) title = e.aiTitle;
+    if (e.isCompactSummary === true) {
+      const c = e.message?.content;
+      const t = typeof c === "string" ? c : Array.isArray(c) ? c.map((b: any) => b.text ?? "").join("") : "";
+      if (t) compactSummary = cleanCompactSummary(t); // last one wins — latest state
+      continue; // not a user prompt
+    }
     if (e.type === "user") {
       const c = e.message?.content;
       let text = "";
@@ -197,7 +220,7 @@ function extractDigest(file: string, id: string, mtimeMs: number): Digest | null
     prompts.length <= MAX_PROMPTS_PER_SESSION
       ? prompts
       : [...prompts.slice(0, MAX_PROMPTS_PER_SESSION / 2), "[…]", ...prompts.slice(-MAX_PROMPTS_PER_SESSION / 2)];
-  return { id, project, mtimeMs, start, end, prompts: kept, lastAssistant: trunc(lastAssistant.replace(/\s+/g, " "), ASSISTANT_TRUNC), ...(title ? { title } : {}), path: file };
+  return { id, project, mtimeMs, start, end, prompts: kept, lastAssistant: trunc(lastAssistant.replace(/\s+/g, " "), ASSISTANT_TRUNC), ...(title ? { title } : {}), ...(compactSummary ? { compactSummary } : {}), path: file };
 }
 
 function updateDigests(): { digests: DigestCache; changed: string[] } {
@@ -294,7 +317,12 @@ function classifyPrompt(digests: DigestCache, chunk: string[], topicSnapshot: st
   const sessions = chunk
     .map((id) => {
       const d = digests[id];
-      return `### ${id}\nproject: ${d.project}${d.title ? `\ntitle: ${d.title}` : ""}\nprompts: ${trunc(d.prompts.join(" | "), SESSION_CHARS)}`;
+      // compacted sessions: the mid-session summary is denser signal than raw
+      // prompt excerpts — substitute it within the same per-session budget
+      const content = d.compactSummary
+        ? `summary: ${trunc(d.compactSummary.replace(/\s+/g, " "), SESSION_CHARS)}`
+        : `prompts: ${trunc(d.prompts.join(" | "), SESSION_CHARS)}`;
+      return `### ${id}\nproject: ${d.project}${d.title ? `\ntitle: ${d.title}` : ""}\n${content}`;
     })
     .join("\n");
   return `You group Claude Code sessions into durable topics of activity — a universal personal knowledge base, NOT just code projects. Sessions include coding, but also research and questions, writing and publishing, running tasks through connected tools (email, calendars, design, data lookup, social media), system administration, and one-off investigations. A topic is a durable area of activity or interest ("Hiccupbot Instagram bot", "LLM pricing research", "Email and domain administration", "LinkedIn content writing"), not a per-task label. Reuse existing topics whenever they fit; create new ones sparingly.
@@ -538,7 +566,7 @@ async function buildBlurb(row: TopicRow, digests: DigestCache, staleOk = false):
     .sort((a, b) => (a.end < b.end ? 1 : -1))
     .slice(0, BLURB_SESSION_CAP)
     .reverse(); // cap keeps the most recent N, but the narrative reads oldest → newest
-  const BLURB_PROMPT_V = "v3-toolcall-learnings"; // bump to invalidate cached briefings on prompt change
+  const BLURB_PROMPT_V = "v4-compact-summaries"; // bump to invalidate cached briefings on prompt change
   const hash = sha(BLURB_PROMPT_V + members.map((d) => d.id + d.mtimeMs).join(","));
   const blurbs = loadJson<BlurbCache>(BLURBS_PATH, {});
   if (blurbs[row.slug]?.hash === hash) return blurbs[row.slug].blurb;
@@ -550,7 +578,7 @@ async function buildBlurb(row: TopicRow, digests: DigestCache, staleOk = false):
   }
 
   const material = members
-    .map((d) => `[${d.end.slice(0, 10)}] ${d.project}\nasked: ${d.prompts.join(" | ")}\nlast reply: ${d.lastAssistant}`)
+    .map((d) => `[${d.end.slice(0, 10)}] ${d.project}${d.compactSummary ? `\nmid-session summary: ${d.compactSummary}` : ""}\nasked: ${d.prompts.join(" | ")}\nlast reply: ${d.lastAssistant}`)
     .join("\n\n");
   process.stderr.write("compressing topic context…\n");
   const reply = await askLLM(`Compress these Claude Code session digests for topic "${row.title}" into a dense context briefing (<400 words) for a fresh session continuing this work. Digests are ordered by date. Structure:
