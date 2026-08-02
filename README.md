@@ -16,7 +16,7 @@ Development (clone anywhere; every edit is live immediately):
 
 ```sh
 git clone https://github.com/obaidregens/pivotal.git && cd pivotal
-bash install.sh --dev
+bash install.sh   # menu offers "Install dev version"
 ```
 
 `install.sh` is checkout-aware: run from inside a clone it offers dev mode and

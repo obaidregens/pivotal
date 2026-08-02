@@ -6,8 +6,8 @@
 #                                      (never deletes development files)
 #                                    · existing prod install → management menu:
 #                                      Add/Change OpenAI key · Install update · Uninstall
-#   bash install.sh --dev            wire THIS checkout directly — development mode:
-#                                    every edit to the codebase is live immediately
+
+
 #   bash install.sh --uninstall-hook remove only the Stop hook
 #
 # Scriptable: PIVOTAL_MENU_CHOICE=key|update|uninstall bash install.sh
@@ -210,8 +210,21 @@ dev_install() {
   say "dev install done. Every edit to $DIR is live immediately."
 }
 
+unwire_any() {  # remove whatever wiring exists (dev or prod); files untouched
+  remove_hook
+  unwire_shell
+}
+
+dev_uninstall() {
+  say "uninstalling dev version"
+  unwire_any
+  note "dev wiring removed — project files untouched (${1:-checkout})"
+  say "done."
+}
+
 # ---------- management --------------------------------------------------------
 menu_pick() {
+  if [ "${PIVOTAL_MENU_CHOICE:-}" = "list" ]; then printf '· %s\n' "$@" >&2; return 1; fi
   if [ -n "${PIVOTAL_MENU_CHOICE:-}" ]; then echo "$PIVOTAL_MENU_CHOICE"; return; fi
   if command -v fzf >/dev/null; then
     printf '%s\n' "$@" | FZF_DEFAULT_OPTS='' FZF_DEFAULT_OPTS_FILE='' fzf \
@@ -270,57 +283,64 @@ do_uninstall() {
   say "uninstalled. Open a new terminal for a clean shell."
 }
 
-manage_menu() {
-  say "pivotal — existing installation detected"
-  local opts=("Add/Change OpenAI key") n
-  if n=$(update_available); then opts+=("Install update ($n new commits)"); else opts+=("Reinstall/refresh from this copy"); fi
-  opts+=("Uninstall")
-  local choice
-  choice=$(menu_pick "${opts[@]}") || { note "no action."; return; }
-  case "$choice" in
-    *key*|key)                    change_key ;;
-    *update*|*Reinstall*|update)  do_update ;;
-    *Uninstall*|uninstall)        do_uninstall ;;
-    *)                            note "no action." ;;
-  esac
-}
-
 # ---------- entry -------------------------------------------------------------
 if [ "${1:-}" = "--uninstall-hook" ]; then
   remove_hook; note "Stop hook removed."; exit 0
 fi
-if [ "${1:-}" = "--dev" ]; then
-  if [ "$IN_CHECKOUT" = 1 ]; then
-    dev_install; exit 0
-  fi
-  echo "--dev requires running install.sh from inside a cloned checkout:"
-  echo "  git clone $REPO_URL && cd pivotal && bash install.sh --dev"
-  exit 1
-fi
-
-# one-off invocation (no project files beside install.sh): fetch the app first
-if [ "$IN_CHECKOUT" = 0 ]; then
-  bootstrap_clone
-fi
 
 WIRED="$(wired_zsh_path || true)"
-if [ -n "$WIRED" ] && [ "$WIRED" != "$PROD_DIR/pivotal.zsh" ]; then
-  # a development checkout is wired in — offer to unwire (files stay untouched)
-  say "Development installation detected"
-  note "shell + hook currently wired to: ${WIRED%/pivotal.zsh}"
-  printf '  Unwire the dev version and install production? Development files are NOT deleted. [y/N] '
-  ans=""; read -r ans || true
-  case "$ans" in
-    [yY]*)
-      remove_hook
-      unwire_shell
-      note "dev wiring removed — checkout untouched"
-      prod_install
-      ;;
-    *) note "leaving dev installation as-is. (Use --dev to re-wire dev explicitly.)"; exit 0 ;;
-  esac
-elif [ -n "$WIRED" ] || { [ -f "$CONFIG" ] && [ -d "$PROD_DIR" ]; }; then
-  manage_menu
-else
-  prod_install
+DEV_WIRED=0; PROD_WIRED=0
+if [ -n "$WIRED" ]; then
+  if [ "$WIRED" = "$PROD_DIR/pivotal.zsh" ]; then PROD_WIRED=1; else DEV_WIRED=1; fi
 fi
+
+# Virgin machine via one-off installer: only one sensible action — no menu.
+if [ "$IN_CHECKOUT" = 0 ] && [ "$DEV_WIRED" = 0 ] && [ "$PROD_WIRED" = 0 ] && [ ! -f "$CONFIG" ]; then
+  bootstrap_clone
+  prod_install
+  exit 0
+fi
+
+# Otherwise: state-aware menu. Options appear only when they apply:
+#  · "Install dev version"    — only when install.sh sits inside the project checkout
+#  · "Uninstall dev version"  — only when dev wiring is detected, from anywhere
+#  · prod actions             — key / update / uninstall as applicable
+say "pivotal"
+opts=()
+[ -f "$CONFIG" ] && opts+=("Add/Change OpenAI key")
+if [ "$PROD_WIRED" = 1 ]; then
+  if [ "$IN_CHECKOUT" = 1 ] && n=$(update_available); then opts+=("Install update ($n new commits)");
+  elif [ "$IN_CHECKOUT" = 1 ]; then opts+=("Refresh production from this checkout");
+  else opts+=("Update production (fetch latest)"); fi
+  opts+=("Uninstall")
+else
+  opts+=("Install production")
+fi
+if [ "$DEV_WIRED" = 1 ]; then
+  opts+=("Uninstall dev version (keeps project files)")
+fi
+if [ "$IN_CHECKOUT" = 1 ] && { [ "$DEV_WIRED" = 0 ] || [ "$WIRED" != "$DIR/pivotal.zsh" ]; }; then
+  opts+=("Install dev version (live from this checkout)")
+fi
+
+choice=$(menu_pick "${opts[@]}") || { note "no action."; exit 0; }
+case "$choice" in
+  *key*|key)
+    change_key ;;
+  "Install production"|install-prod)
+    [ "$IN_CHECKOUT" = 0 ] && bootstrap_clone
+    if [ "$DEV_WIRED" = 1 ]; then unwire_any; note "dev wiring removed — checkout untouched"; fi
+    prod_install ;;
+  *update*|*Refresh*|*Update*|update)
+    [ "$IN_CHECKOUT" = 0 ] && bootstrap_clone
+    do_update ;;
+  "Uninstall dev version (keeps project files)"|uninstall-dev)
+    dev_uninstall "${WIRED%/pivotal.zsh}" ;;
+  "Install dev version (live from this checkout)"|install-dev)
+    if [ -n "$WIRED" ]; then unwire_any; note "previous wiring removed"; fi
+    dev_install ;;
+  "Uninstall"|uninstall)
+    do_uninstall ;;
+  *)
+    note "no action." ;;
+esac
