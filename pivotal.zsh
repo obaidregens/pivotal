@@ -127,9 +127,9 @@ fi
 # orange bold. Shows the real key if down-arrow binding is off.
 if [[ ${PIVOTAL_NO_HINT:-0} != 1 && ${PIVOTAL_NOBIND:-0} != 1 && -o interactive ]] && [[ -t 1 ]]; then
   if [[ ${PIVOTAL_BIND_DOWN:-1} == 1 ]]; then
-    _pivotal_hint="pivotal ❯ down arrow"
+    _pivotal_hint="pivotal ❯ ↓"
   else
-    _pivotal_hint="pivotal ❯ ctrl+t"
+    _pivotal_hint="pivotal ❯ ⌃T"
   fi
   _pivotal_pad=$(( ${COLUMNS:-80} - ${#_pivotal_hint} - 1 ))
   (( _pivotal_pad < 0 )) && _pivotal_pad=0
