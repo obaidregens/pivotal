@@ -131,9 +131,9 @@ if [[ ${PIVOTAL_NO_HINT:-0} != 1 && ${PIVOTAL_NOBIND:-0} != 1 && -o interactive 
   else
     _pivotal_hint="pivotal ❯ ⌃T"
   fi
-  _pivotal_pad=$(( ${COLUMNS:-80} - ${#_pivotal_hint} - 1 ))
+  _pivotal_pad=$(( ${COLUMNS:-80} - ${#_pivotal_hint} - 3 ))  # chip adds one space each side
   (( _pivotal_pad < 0 )) && _pivotal_pad=0
-  printf '%*s\033[1;38;5;173m%s\033[0m\n' "$_pivotal_pad" '' "$_pivotal_hint"
+  printf '%*s\033[1;48;5;173;38;5;231m %s \033[0m\n' "$_pivotal_pad" '' "$_pivotal_hint"
   unset _pivotal_hint _pivotal_pad
 fi
 
