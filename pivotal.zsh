@@ -123,22 +123,18 @@ if [[ ${PIVOTAL_NOBIND:-0} != 1 ]]; then
   fi
 fi
 
-# fresh-terminal hint (PIVOTAL_NO_HINT=1 to silence). Plain cat of a pre-rendered
-# file — refreshed by pivotal runs, so zero startup latency here.
-# If down-arrow binding is off, don't advertise it — show the real key.
-if [[ ${PIVOTAL_NO_HINT:-0} != 1 && -o interactive ]] && [[ -t 1 ]]; then
-  if [[ -r ~/.claude/cache/pivotal/hint.txt ]]; then
-    _pivotal_hint=$(<~/.claude/cache/pivotal/hint.txt)
-    if [[ ${PIVOTAL_BIND_DOWN:-1} != 1 || ${PIVOTAL_NOBIND:-0} == 1 ]]; then
-      _pivotal_hint=${_pivotal_hint/↓ down-arrow on empty line/Ctrl+T}
-    fi
-    # narrow terminal: drop the "— latest: …" tail so the hint never wraps
-    if (( ${COLUMNS:-80} < 90 )); then
-      _pivotal_hint="${_pivotal_hint%% — latest*}"$'\e[0m'
-    fi
-    [[ ${PIVOTAL_NOBIND:-0} != 1 ]] && print -r -- "$_pivotal_hint"
-    unset _pivotal_hint
+# fresh-terminal hint (PIVOTAL_NO_HINT=1 to silence): concise, right-aligned,
+# orange bold. Shows the real key if down-arrow binding is off.
+if [[ ${PIVOTAL_NO_HINT:-0} != 1 && ${PIVOTAL_NOBIND:-0} != 1 && -o interactive ]] && [[ -t 1 ]]; then
+  if [[ ${PIVOTAL_BIND_DOWN:-1} == 1 ]]; then
+    _pivotal_hint="pivotal ❯ down arrow"
+  else
+    _pivotal_hint="pivotal ❯ ctrl+t"
   fi
+  _pivotal_pad=$(( ${COLUMNS:-80} - ${#_pivotal_hint} - 1 ))
+  (( _pivotal_pad < 0 )) && _pivotal_pad=0
+  printf '%*s\033[1;38;5;173m%s\033[0m\n' "$_pivotal_pad" '' "$_pivotal_hint"
+  unset _pivotal_hint _pivotal_pad
 fi
 
 # keep blurbs fresh in background so continue is instant + token-free at open

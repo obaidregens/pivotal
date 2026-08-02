@@ -804,13 +804,6 @@ if (cmd === "preview" || cmd === "list-cached" || cmd === "stats-cached") {
 const { digests, topics } = await refresh();
 const rows = topicRows(digests, topics);
 
-// hint file for shell startup message (read by pivotal.zsh — must stay one cheap cat)
-if (rows.length)
-  writeFileSync(
-    join(CACHE_DIR, "hint.txt"),
-    `\x1b[2m↓ down-arrow on empty line: continue a Claude Code topic — latest: "${rows[0].title}" (${rows.length} topics)\x1b[0m\n`
-  );
-
 if (cmd === "list") {
   for (const r of rows)
     console.log(`${r.slug.padEnd(32)} ${String(r.sessions.length).padStart(4)}  ${r.last.slice(0, 10)}  ${r.title}`);
