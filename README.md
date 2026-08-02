@@ -1,4 +1,3 @@
-<img width="1452" height="551" alt="Screenshot 2026-08-02 at 3 37 00 PM" src="https://github.com/user-attachments/assets/b703688e-60ed-44af-93d3-94af184747de" />
 # pivotal
 
 **a new model for agent harnesses: works alongside with claude code, but everything you do is additionally categorized into topics — instead of directories and chat sessions**
