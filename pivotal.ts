@@ -531,14 +531,30 @@ ${material}`);
   return reply.text;
 }
 
-function launch(row: TopicRow, blurb: string) {
+function sourceSessionsAppendix(row: TopicRow, digests: DigestCache): string {
+  // deterministic reference list: latest sessions + the most substantial ones,
+  // each with a ready resume command so the new session can consult the originals
+  const members = row.sessions.map((id) => digests[id]).filter(Boolean);
+  const recent = [...members].sort((a, b) => (a.end < b.end ? 1 : -1)).slice(0, 4);
+  const biggest = [...members].sort((a, b) => b.prompts.length - a.prompts.length).slice(0, 2);
+  const picked = [...new Map([...recent, ...biggest].map((d) => [d.id, d])).values()]
+    .sort((a, b) => (a.end < b.end ? 1 : -1));
+  if (!picked.length) return "";
+  const lines = picked.map((d) => {
+    const opened = d.prompts[0]?.slice(0, 90) ?? "";
+    return `- [${d.end.slice(0, 10)}] \`cd ${d.project} && claude -r ${d.id}\` — "${opened}"`;
+  });
+  return `\n\n## Source sessions (most recent / most substantial)\nResume any of these to see the full original conversation:\n${lines.join("\n")}`;
+}
+
+function launch(row: TopicRow, blurb: string, digests?: DigestCache) {
   if (!Bun.which("claude")) {
     console.error("pivotal: `claude` CLI not found on PATH — install Claude Code to continue a topic.");
     console.error("Blurb was generated and cached; rerun once claude is installed.");
     process.exit(1);
   }
   const cwd = existsSync(row.project) ? row.project : homedir();
-  const prompt = `${BRIEFING_PREFIX} "${row.title}":\n\n${blurb}\n\n---\nI'm continuing this work now. Acknowledge briefly, then ask what I want to tackle or suggest the top unresolved thread.`;
+  const prompt = `${BRIEFING_PREFIX} "${row.title}":\n\n${blurb}${digests ? sourceSessionsAppendix(row, digests) : ""}\n\n---\nI'm continuing this work now. Acknowledge briefly, then ask what I want to tackle or suggest the top unresolved thread.`;
   process.stderr.write(`\nstarting claude in ${cwd}…\n\n`);
   spawnSync("claude", [prompt], { cwd, stdio: "inherit", env: { ...process.env, CLAUDECODE: "" } });
 }
@@ -862,10 +878,10 @@ if (cmd === "list") {
     console.error("Check provider config (~/.claude/cache/pivotal/config.json) or run `cct blurb " + r.slug + "` to retry.");
     process.exit(1);
   }
-  launch(r, blurb);
+  launch(r, blurb, digests);
 } else {
   if (!process.stdin.isTTY) { console.error("pivotal: no TTY — use `cct list`"); process.exit(1); }
   const r = await select(rows);
-  if (r) launch(r, await buildBlurb(r, digests));
+  if (r) launch(r, await buildBlurb(r, digests), digests);
   else process.exit(130); // user cancel = 130 (shell SIGINT convention) so `cct && …` chains behave
 }
