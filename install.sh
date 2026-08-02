@@ -19,7 +19,6 @@ CACHE_DIR="$HOME/.claude/cache/pivotal"
 CONFIG="$CACHE_DIR/config.json"
 SETTINGS="$HOME/.claude/settings.json"
 REPO_URL="https://github.com/obaidregens/pivotal.git"
-mkdir -p "$CACHE_DIR"
 
 # Am I running inside the dev project (a clone), or as a standalone one-off
 # (e.g. curl | bash)? Dev mode is only offered from inside a real checkout;
@@ -129,6 +128,7 @@ discover_key() {
 }
 
 write_config() {  # $1 = provider, $2 = key, $3 = source
+  mkdir -p "$CACHE_DIR"
   if [ "$1" = openai ]; then
     local stored="\"$2\""
     [ "$3" = env ] && stored='"env"'
@@ -297,6 +297,7 @@ delete_cache() {
     [ "$ans" = yes ] || { note "cancelled."; return; }
   fi
   rm -rf "$CACHE_DIR"
+  rm -f "$SETTINGS.pivotal-backup"   # hook-edit safety copy — last pivotal trace
   say "cache & config deleted."
 }
 
