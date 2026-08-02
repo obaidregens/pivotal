@@ -355,7 +355,15 @@ fi
 opts=()
 # key management only makes sense against an installed app (installers set the
 # provider themselves; a lone leftover config isn't worth managing)
-{ [ "$PROD_WIRED" = 1 ] || [ "$DEV_WIRED" = 1 ]; } && [ -f "$CONFIG" ] && opts+=("Add/Change OpenAI key")
+if { [ "$PROD_WIRED" = 1 ] || [ "$DEV_WIRED" = 1 ]; } && [ -f "$CONFIG" ]; then
+  stored=$(grep -oE '"openaiKey": *"[^"]*"' "$CONFIG" | sed -E 's/.*: *"([^"]*)"/\1/' || true)
+  [ "$stored" = env ] && stored="${OPENAI_API_KEY:-}"
+  if [ -n "$stored" ]; then
+    opts+=("Change OpenAI key (sk-…${stored: -4})")
+  else
+    opts+=("Add OpenAI key")
+  fi
+fi
 if [ "$PROD_WIRED" = 1 ]; then
   if [ "$IN_CHECKOUT" = 1 ] && n=$(update_available); then opts+=("Install update ($n new commits)");
   elif [ "$IN_CHECKOUT" = 1 ]; then opts+=("Refresh production from this checkout");
@@ -381,7 +389,7 @@ else MENU_HEADER='Not installed — pick an action (Esc quits)'; fi
 
 choice=$(menu_pick "${opts[@]}") || { note "no action."; exit 0; }
 case "$choice" in
-  "Add/Change OpenAI key"|key)
+  "Add OpenAI key"|"Change OpenAI key ("*|key)
     change_key ;;
   "Install production"|install-prod)
     [ "$IN_CHECKOUT" = 0 ] && bootstrap_clone
