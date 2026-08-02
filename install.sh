@@ -40,6 +40,14 @@ say()  { printf '\033[1m%s\033[0m\n' "$*"; }
 note() { printf '  %s\n' "$*"; }
 dim()  { printf '  \033[90m%s\033[0m\n' "$*"; }  # light gray — secondary info
 
+welcome() {  # first-contact banner — nothing installed, no cache yet
+  printf '\n  \033[1;38;5;173mpivotal\033[0m\n\n'
+  note "a new model for agent harnesses: your directories and sessions"
+  note "unfold into topics, categorized by goal."
+  dim "an experiment, so far."
+  printf '\n'
+}
+
 # ---------- hook management ---------------------------------------------------
 settings_hook() {  # $1 = add | remove ; PIVOTAL_HOOK_CMD used on add
   bun -e '
@@ -311,6 +319,13 @@ DEV_WIRED=0; PROD_WIRED=0
 if [ -n "$WIRED" ]; then
   if [ "$WIRED" = "$PROD_DIR/pivotal.zsh" ]; then PROD_WIRED=1; else DEV_WIRED=1; fi
 fi
+HAS_CACHE=0
+[ -n "$(ls -A "$CACHE_DIR" 2>/dev/null)" ] && HAS_CACHE=1
+
+# First contact (nothing wired, no cache): welcome banner.
+if [ "$DEV_WIRED" = 0 ] && [ "$PROD_WIRED" = 0 ] && [ "$HAS_CACHE" = 0 ]; then
+  welcome
+fi
 
 # Virgin machine via one-off installer: only one sensible action — no menu.
 if [ "$IN_CHECKOUT" = 0 ] && [ "$DEV_WIRED" = 0 ] && [ "$PROD_WIRED" = 0 ] && [ ! -f "$CONFIG" ]; then
@@ -339,8 +354,6 @@ fi
 if [ "$IN_CHECKOUT" = 1 ] && { [ "$DEV_WIRED" = 0 ] || [ "$WIRED" != "$DIR/pivotal.zsh" ]; }; then
   opts+=("Install dev version (live from this checkout)")
 fi
-HAS_CACHE=0
-[ -n "$(ls -A "$CACHE_DIR" 2>/dev/null)" ] && HAS_CACHE=1
 if [ "$HAS_CACHE" = 1 ]; then
   opts+=("Delete cache & config (topics, briefings, provider key)")
 fi
