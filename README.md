@@ -12,7 +12,7 @@ _but thus far, I'm choosing to keep and extend it as much as possible until I ru
 
 ---
 
-`pivotal` is a new take on the model, 
+`pivotal` is a new take on the agentic harness model, it views everything you do as a universal workspace, intelligently categorizing it into topics instead of being isolated across workspaces, and empowers claude code to think that way as well.
 
 why not openclaw?
 
