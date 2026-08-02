@@ -50,6 +50,7 @@ type Digest = {
   prompts: string[];
   lastAssistant: string;
   title?: string; // Claude Code's own ai-title for the session (free, high quality)
+  path?: string; // transcript file — direct read is the fastest way to the full conversation
 };
 type DigestCache = Record<string, Digest>; // key: sessionId
 type Topic = { slug: string; title: string; description: string };
@@ -196,7 +197,7 @@ function extractDigest(file: string, id: string, mtimeMs: number): Digest | null
     prompts.length <= MAX_PROMPTS_PER_SESSION
       ? prompts
       : [...prompts.slice(0, MAX_PROMPTS_PER_SESSION / 2), "[…]", ...prompts.slice(-MAX_PROMPTS_PER_SESSION / 2)];
-  return { id, project, mtimeMs, start, end, prompts: kept, lastAssistant: trunc(lastAssistant.replace(/\s+/g, " "), ASSISTANT_TRUNC), ...(title ? { title } : {}) };
+  return { id, project, mtimeMs, start, end, prompts: kept, lastAssistant: trunc(lastAssistant.replace(/\s+/g, " "), ASSISTANT_TRUNC), ...(title ? { title } : {}), path: file };
 }
 
 function updateDigests(): { digests: DigestCache; changed: string[] } {
@@ -546,10 +547,10 @@ function sourceSessionsAppendix(row: TopicRow, digests: DigestCache): string {
   const lines = picked.map((d) => {
     // Claude Code's own per-session ai-title beats a raw prompt excerpt
     const label = d.title ?? `"${d.prompts[0]?.slice(0, 90) ?? ""}"`;
-    return `- [${d.end.slice(0, 10)}] ${label} — workspace \`${d.project}\` → \`claude -r ${d.id}\``;
+    return `- [${d.end.slice(0, 10)}] ${label}\n  \`${d.path ?? `~/.claude/projects/*/${d.id}.jsonl`}\``;
   });
   return `\n\n## Source sessions (most recent / most substantial)
-Claude Code stores sessions per workspace (directory): a session id only resolves when \`claude -r\` runs from its workspace. To consult one, cd to the listed workspace first (e.g. \`cd <workspace> && claude -r <id>\`), or read its transcript directly under ~/.claude/projects/.
+Full original conversations — read a transcript file directly (fastest; JSONL, one event per line, filter for "type":"user" / "type":"assistant"). Interactive resume also works: cd to the session's workspace, then \`claude -r <id>\` (the filename is the id).
 ${lines.join("\n")}`;
 }
 
