@@ -226,7 +226,7 @@ dev_uninstall() {
 }
 
 # ---------- management --------------------------------------------------------
-menu_pick() {
+menu_pick() {  # header reflects real wiring state, set in MENU_HEADER by entry
   if [ "${PIVOTAL_MENU_CHOICE:-}" = "list" ]; then printf '· %s\n' "$@" >&2; return 1; fi
   if [ -n "${PIVOTAL_MENU_CHOICE:-}" ]; then echo "$PIVOTAL_MENU_CHOICE"; return; fi
   if command -v fzf >/dev/null; then
@@ -234,7 +234,7 @@ menu_pick() {
       --height 40% --reverse --no-info \
       --pointer '❯' \
       --color 'bg+:-1,fg+:173,pointer:173,hl:173,hl+:208,gutter:-1' \
-      --prompt 'pivotal ▸ ' --header 'Existing installation — pick an action (Esc quits)'
+      --prompt 'pivotal ▸ ' --header "${MENU_HEADER:-pick an action (Esc quits)}"
   else
     local o; select o in "$@"; do echo "$o"; break; done
   fi
@@ -324,6 +324,10 @@ fi
 if [ "$IN_CHECKOUT" = 1 ] && { [ "$DEV_WIRED" = 0 ] || [ "$WIRED" != "$DIR/pivotal.zsh" ]; }; then
   opts+=("Install dev version (live from this checkout)")
 fi
+
+if [ "$PROD_WIRED" = 1 ]; then MENU_HEADER='Existing installation — pick an action (Esc quits)'
+elif [ "$DEV_WIRED" = 1 ]; then MENU_HEADER='Dev installation — pick an action (Esc quits)'
+else MENU_HEADER='Not installed (cache/config kept) — pick an action (Esc quits)'; fi
 
 choice=$(menu_pick "${opts[@]}") || { note "no action."; exit 0; }
 case "$choice" in
