@@ -542,9 +542,11 @@ function sourceSessionsAppendix(row: TopicRow, digests: DigestCache): string {
   if (!picked.length) return "";
   const lines = picked.map((d) => {
     const opened = d.prompts[0]?.slice(0, 90) ?? "";
-    return `- [${d.end.slice(0, 10)}] \`cd ${d.project} && claude -r ${d.id}\` — "${opened}"`;
+    return `- [${d.end.slice(0, 10)}] workspace \`${d.project}\` → \`claude -r ${d.id}\` — "${opened}"`;
   });
-  return `\n\n## Source sessions (most recent / most substantial)\nResume any of these to see the full original conversation:\n${lines.join("\n")}`;
+  return `\n\n## Source sessions (most recent / most substantial)
+Claude Code stores sessions per workspace (directory): a session id only resolves when \`claude -r\` runs from its workspace. To consult one, cd to the listed workspace first (e.g. \`cd <workspace> && claude -r <id>\`), or read its transcript directly under ~/.claude/projects/.
+${lines.join("\n")}`;
 }
 
 function launch(row: TopicRow, blurb: string, digests?: DigestCache) {
