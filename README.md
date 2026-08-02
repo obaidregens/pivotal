@@ -9,6 +9,7 @@ _thesis: claude code is being used for a lot more than coding now. I do everythi
 _and the assumed model of project directories and chat sessions with fresh contexts has become limiting enough for me that I've almost considered breaking claude code to roll my own harness. almost._
 
 but thus far, I'm choosing to keep and extend it as much as possible until I run into a wall.
+
 ---
 
 `pivotal` is a new take on the model, 
