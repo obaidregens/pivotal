@@ -338,13 +338,16 @@ fi
 if [ "$IN_CHECKOUT" = 1 ] && { [ "$DEV_WIRED" = 0 ] || [ "$WIRED" != "$DIR/pivotal.zsh" ]; }; then
   opts+=("Install dev version (live from this checkout)")
 fi
-if [ -n "$(ls -A "$CACHE_DIR" 2>/dev/null)" ]; then
+HAS_CACHE=0
+[ -n "$(ls -A "$CACHE_DIR" 2>/dev/null)" ] && HAS_CACHE=1
+if [ "$HAS_CACHE" = 1 ]; then
   opts+=("Delete cache & config (topics, briefings, provider key)")
 fi
 
 if [ "$PROD_WIRED" = 1 ]; then MENU_HEADER='Existing installation — pick an action (Esc quits)'
 elif [ "$DEV_WIRED" = 1 ]; then MENU_HEADER='Dev installation — pick an action (Esc quits)'
-else MENU_HEADER='Not installed (cache/config kept) — pick an action (Esc quits)'; fi
+elif [ "$HAS_CACHE" = 1 ]; then MENU_HEADER='Not installed (cache/config kept) — pick an action (Esc quits)'
+else MENU_HEADER='Not installed — pick an action (Esc quits)'; fi
 
 choice=$(menu_pick "${opts[@]}") || { note "no action."; exit 0; }
 case "$choice" in
