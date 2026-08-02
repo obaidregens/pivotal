@@ -324,11 +324,16 @@ function applyClassifyResult(out: any, cache: TopicsCache, allowed: Set<string>)
 
 const PROGRESS_PATH = join(CACHE_DIR, "progress.json");
 const writeProgress = (phase: string, done: number, total: number) => {
-  // pre-rendered display line so shell consumers never parse JSON
-  const cells = 10;
-  const filled = total ? Math.round((done / total) * cells) : 0;
-  const bar = "▰".repeat(filled) + "▱".repeat(cells - filled);
-  const line = `⟳ ${phase} ${bar} ${done}/${total}`;
+  // pre-rendered display line so shell consumers never parse JSON.
+  // total=0 → indeterminate phase (no bar yet), e.g. the local digest scan.
+  let line: string;
+  if (total > 0) {
+    const cells = 10;
+    const filled = Math.round((done / total) * cells);
+    line = `⟳ ${phase} ${"▰".repeat(filled)}${"▱".repeat(cells - filled)} ${done}/${total}`;
+  } else {
+    line = `⟳ ${phase}…`;
+  }
   try { writeFileSync(PROGRESS_PATH, JSON.stringify({ phase, done, total, line, ts: Date.now() })); } catch {}
 };
 const clearProgress = () => { try { unlinkSync(PROGRESS_PATH); } catch {} };
@@ -898,6 +903,9 @@ if (cmd === "preview" || cmd === "list-cached" || cmd === "stats-cached") {
   process.exit(0);
 }
 
+// background runs announce themselves before the (silent) digest scan so the
+// picker never shows a bare "0 topics" with no sign of life during cold start
+if (cmd === "warm" || cmd === "reanalyze") writeProgress("indexing sessions", 0, 0);
 const { digests, topics } = await refresh();
 const rows = topicRows(digests, topics);
 
