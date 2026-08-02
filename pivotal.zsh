@@ -27,10 +27,8 @@ _pivotal-pick() {
     rm -f "$err_file"; return 1
   fi
   rm -f "$err_file"
-  if [[ -z $probe ]]; then
-    print -u2 "pivotal: no topics indexed yet — first index runs in background (or run: cct list)"
-    return 1
-  fi
+  # NOTE: an empty list is NOT a bail — the picker opens empty and the attached
+  # progress watcher live-reloads it as the first index lands (footer shows the bar)
   # header comes fully assembled from the indexer (stats/progress + keys guide,
   # single line) so pusher updates and the initial header can never diverge
   local header

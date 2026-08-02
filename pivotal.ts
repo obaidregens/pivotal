@@ -201,6 +201,7 @@ function extractDigest(file: string, id: string, mtimeMs: number): Digest | null
 }
 
 function updateDigests(): { digests: DigestCache; changed: string[] } {
+  const t0 = performance.now();
   const digests = loadJson<DigestCache>(DIGESTS_PATH, {});
   const seen = new Set<string>();
   const changed: string[] = [];
@@ -224,12 +225,36 @@ function updateDigests(): { digests: DigestCache; changed: string[] } {
   }
   for (const id of Object.keys(digests)) if (!seen.has(id)) delete digests[id];
   saveJson(DIGESTS_PATH, digests);
+  metric("digest", { ms: Math.round(performance.now() - t0), changed: changed.length, total: Object.keys(digests).length });
   return { digests, changed };
 }
 
+// ---------- dev metrics -------------------------------------------------------
+// Append-only JSONL of stage timings + token estimates (chars/4) for tuning
+// estimations. Read with: pivotal metrics
+const METRICS_PATH = join(CACHE_DIR, "metrics.jsonl");
+const metric = (stage: string, data: Record<string, unknown>) => {
+  try {
+    mkdirSync(CACHE_DIR, { recursive: true });
+    writeFileSync(METRICS_PATH, JSON.stringify({ ts: Date.now(), stage, ...data }) + "\n", { flag: "a" });
+  } catch {}
+};
+const tokEst = (s: string) => Math.round(s.length / 4);
+
 // ---------- LLM helper ----------
 type LLMReply = { text: string; model: string };
-async function askLLM(prompt: string): Promise<LLMReply> {
+async function askLLM(prompt: string, stage = "llm"): Promise<LLMReply> {
+  const t0 = performance.now();
+  const reply = await askLLMInner(prompt);
+  metric(stage, {
+    ms: Math.round(performance.now() - t0),
+    model: reply.model,
+    inTok: tokEst(prompt),
+    outTok: tokEst(reply.text),
+  });
+  return reply;
+}
+async function askLLMInner(prompt: string): Promise<LLMReply> {
   if (CONFIG.provider === "openai" && resolveOpenaiKey()) {
     const model = CONFIG.openaiModel ?? "gpt-5.6-luna";
     const res = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -322,7 +347,7 @@ async function classifySessions(digests: DigestCache, ids: string[], cache: Topi
     const seed = chunks.shift()!;
     process.stderr.write("seeding topic vocabulary from first chunk…\n");
     try {
-      const reply = await askLLM(classifyPrompt(digests, seed, ""));
+      const reply = await askLLM(classifyPrompt(digests, seed, ""), "classify-seed");
       applyClassifyResult(parseJsonReply(reply.text), cache, new Set(seed));
       cache.classifiedBy = { [reply.model]: Object.keys(cache.sessionTopics).length };
       saveJson(TOPICS_PATH, cache);
@@ -339,7 +364,7 @@ async function classifySessions(digests: DigestCache, ids: string[], cache: Topi
     while (next < chunks.length) {
       const mine = chunks[next++];
       try {
-        const reply = await askLLM(classifyPrompt(digests, mine, snapshot));
+        const reply = await askLLM(classifyPrompt(digests, mine, snapshot), "classify");
         const out = parseJsonReply(reply.text);
         const before = Object.keys(cache.sessionTopics).length;
         applyClassifyResult(out, cache, new Set(mine));
@@ -366,7 +391,7 @@ async function classifySessions(digests: DigestCache, ids: string[], cache: Topi
     for (let i = 0; i < leftover.length; i += CLASSIFY_CHUNK) {
       const mine = leftover.slice(i, i + CLASSIFY_CHUNK);
       try {
-        const reply = await askLLM(classifyPrompt(digests, mine, topicSnapshot()));
+        const reply = await askLLM(classifyPrompt(digests, mine, topicSnapshot()), "classify-retry");
         const before = Object.keys(cache.sessionTopics).length;
         applyClassifyResult(parseJsonReply(reply.text), cache, new Set(mine));
         const gained = Object.keys(cache.sessionTopics).length - before;
@@ -421,7 +446,7 @@ async function mergeDuplicateTopics(cache: TopicsCache, digests?: DigestCache) {
 ${list}
 
 Reply with ONLY JSON mapping duplicate slug -> canonical slug (pick the topic with more sessions or the clearer title as canonical; omit topics with no duplicate):
-{"aliases":{"<dupSlug>":"<canonicalSlug>"}}`)).text
+{"aliases":{"<dupSlug>":"<canonicalSlug>"}}`, "merge")).text
     );
     const aliases: Record<string, string> = out.aliases ?? {};
     // resolve chains and self-references
@@ -529,7 +554,7 @@ async function buildBlurb(row: TopicRow, digests: DigestCache, staleOk = false):
 3. **Latest / next** — where the last session left off: the open question, unresolved thread, or obvious next step.
 Key file paths and commands inline where relevant. Plain markdown, no preamble.
 
-${material}`);
+${material}`, "briefing");
   blurbs[row.slug] = { hash, blurb: reply.text, model: reply.model };
   saveJson(BLURBS_PATH, blurbs);
   return reply.text;
@@ -620,6 +645,52 @@ async function select(rows: TopicRow[]): Promise<TopicRow | null> {
 
 // ---------- main ----------
 const cmd = process.argv[2] ?? "menu";
+const RUN_T0 = performance.now();
+
+if (cmd === "metrics") {
+  // aggregate metrics.jsonl into per-stage estimation numbers
+  let lines: any[] = [];
+  try {
+    lines = readFileSync(METRICS_PATH, "utf8").trim().split("\n").map((l) => JSON.parse(l));
+  } catch { console.log("no metrics recorded yet"); process.exit(0); }
+  const stages: Record<string, any[]> = {};
+  for (const l of lines) (stages[l.stage] ??= []).push(l);
+  const fmt = (n: number) => (n >= 10000 ? `${(n / 1000).toFixed(1)}k` : String(Math.round(n)));
+  console.log("stage            calls   total     avg/call   inTok    outTok   ms/1k-outTok");
+  for (const [stage, ls] of Object.entries(stages).sort()) {
+    const ms = ls.reduce((s, l) => s + (l.ms ?? 0), 0);
+    const inT = ls.reduce((s, l) => s + (l.inTok ?? 0), 0);
+    const outT = ls.reduce((s, l) => s + (l.outTok ?? 0), 0);
+    const perOut = outT ? Math.round(ms / (outT / 1000)) : 0;
+    console.log(
+      `${stage.padEnd(16)} ${String(ls.length).padStart(5)}   ${(ms / 1000).toFixed(1).padStart(6)}s  ${fmt(ms / ls.length).padStart(7)}ms  ${fmt(inT).padStart(6)}   ${fmt(outT).padStart(6)}   ${perOut ? fmt(perOut) + "ms" : "—"}`
+    );
+  }
+  // derived per-unit estimators
+  const cls = [...(stages["classify"] ?? []), ...(stages["classify-seed"] ?? []), ...(stages["classify-retry"] ?? [])];
+  const digs = stages["digest"] ?? [];
+  const briefs = stages["briefing"] ?? [];
+  const runs = Object.entries(stages).filter(([k]) => k.startsWith("run-"));
+  console.log("\nestimators:");
+  if (digs.length) {
+    const ch = digs.reduce((s, l) => s + (l.changed ?? 0), 0);
+    const ms = digs.reduce((s, l) => s + (l.ms ?? 0), 0);
+    if (ch) console.log(`  digest: ${(ms / ch).toFixed(1)}ms per changed chat (local, free)`);
+  }
+  if (cls.length) {
+    const ms = cls.reduce((s, l) => s + (l.ms ?? 0), 0);
+    console.log(`  classify: ${(ms / cls.length / 1000).toFixed(1)}s per chunk of ≤${CLASSIFY_CHUNK} chats (~${(ms / cls.length / CLASSIFY_CHUNK * 1000 / 1000).toFixed(0)}ms per chat serial; ÷${CLASSIFY_CONCURRENCY} parallel)`);
+  }
+  if (briefs.length) {
+    const ms = briefs.reduce((s, l) => s + (l.ms ?? 0), 0);
+    console.log(`  briefing: ${(ms / briefs.length / 1000).toFixed(1)}s per topic (÷4 parallel)`);
+  }
+  for (const [k, ls] of runs) {
+    const last = ls[ls.length - 1];
+    console.log(`  ${k}: last full run ${(last.ms / 1000).toFixed(0)}s — ${last.sessions} chats → ${last.topics} topics, ${last.briefingsRebuilt} briefings`);
+  }
+  process.exit(0);
+}
 if (cmd === "rebuild" || cmd === "reanalyze") {
   // selective: NEVER touch config.json (provider + key live there).
   // hint.txt deliberately survives — a slightly stale hint beats a silent
@@ -862,6 +933,7 @@ if (cmd === "list") {
   }
   writeFileSync(join(CACHE_DIR, "warm-stamp"), String(Date.now()));
   clearProgress();
+  metric(`run-${cmd}`, { ms: Math.round(performance.now() - RUN_T0), sessions: Object.keys(digests).length, topics: rows.length, briefingsRebuilt: built });
   process.stderr.write(`done: ${built} briefings rebuilt, ${rows.length - built} already fresh\n`);
 } else if (cmd === "merge") {
   // re-run duplicate-topic collapse — for when a parallel backfill leaves near-dupes
