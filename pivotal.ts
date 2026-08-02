@@ -360,18 +360,67 @@ function applyClassifyResult(out: any, cache: TopicsCache, allowed: Set<string>)
 }
 
 const PROGRESS_PATH = join(CACHE_DIR, "progress.json");
+// historical per-call means from metrics.jsonl, for ETA before live rate exists
+let _histMeans: Record<string, number> | null = null;
+function histMean(stage: string): number {
+  if (!_histMeans) {
+    _histMeans = {};
+    try {
+      const acc: Record<string, { ms: number; n: number }> = {};
+      for (const l of readFileSync(METRICS_PATH, "utf8").trim().split("\n")) {
+        const e = JSON.parse(l);
+        if (e.ms) { (acc[e.stage] ??= { ms: 0, n: 0 }).ms += e.ms; acc[e.stage].n++; }
+      }
+      for (const [s, a] of Object.entries(acc)) _histMeans[s] = a.ms / a.n;
+    } catch {}
+  }
+  return _histMeans[stage] ?? 0;
+}
+const fmtEta = (ms: number) => {
+  const s = Math.round(ms / 1000);
+  if (s < 5) return "";
+  if (s < 100) return ` · ~${s}s left`;
+  return ` · ~${Math.floor(s / 60)}m ${String(Math.round(s % 60)).padStart(2, "0")}s left`;
+};
+// phase → {metrics stage, worker parallelism} for the historical fallback
+const PHASE_EST: Record<string, { stage: string; conc: number }> = {
+  categorizing: { stage: "classify", conc: CLASSIFY_CONCURRENCY },
+  briefing: { stage: "briefing", conc: 4 },
+  "merging topics": { stage: "merge", conc: 1 },
+};
+
 const writeProgress = (phase: string, done: number, total: number) => {
   // pre-rendered display line so shell consumers never parse JSON.
   // total=0 → indeterminate phase (no bar yet), e.g. the local digest scan.
+  const now = Date.now();
+  // live rate: carry the phase start across writes; elapsed/done includes
+  // parallelism automatically. Fallback to metrics history before done≥2.
+  let phaseStart = now;
+  try {
+    const prev = JSON.parse(readFileSync(PROGRESS_PATH, "utf8"));
+    if (prev.phase === phase && prev.phaseStart) phaseStart = prev.phaseStart;
+  } catch {}
+  let etaMs = 0;
+  if (total > 0 && done < total) {
+    if (done >= 2) {
+      etaMs = ((now - phaseStart) / done) * (total - done);
+    } else {
+      const est = PHASE_EST[phase];
+      if (est) {
+        const mean = histMean(est.stage);
+        if (mean) etaMs = Math.ceil((total - done) / est.conc) * mean;
+      }
+    }
+  }
   let line: string;
   if (total > 0) {
     const cells = 10;
     const filled = Math.round((done / total) * cells);
-    line = `⟳ ${phase} ${"▰".repeat(filled)}${"▱".repeat(cells - filled)} ${done}/${total}`;
+    line = `⟳ ${phase} ${"▰".repeat(filled)}${"▱".repeat(cells - filled)} ${done}/${total}${fmtEta(etaMs)}`;
   } else {
     line = `⟳ ${phase}…`;
   }
-  try { writeFileSync(PROGRESS_PATH, JSON.stringify({ phase, done, total, line, ts: Date.now() })); } catch {}
+  try { writeFileSync(PROGRESS_PATH, JSON.stringify({ phase, done, total, line, ts: now, phaseStart })); } catch {}
 };
 const clearProgress = () => { try { unlinkSync(PROGRESS_PATH); } catch {} };
 
