@@ -993,7 +993,7 @@ if (cmd === "preview" || cmd === "list-cached" || cmd === "stats-cached") {
       process.stdout.write(`${r.slug}\t\x1b[1m${r.title}\x1b[0m  \x1b[2m${meta}\x1b[0m\n  ${r.description}\0`);
     }
     // trailing utility entry — reopens the installer menu (key/update/uninstall)
-    process.stdout.write(`__settings__\t\x1b[2m⚙ settings — key, update, uninstall (runs install.sh)\x1b[0m\0`);
+    process.stdout.write(`__settings__\t\x1b[2m⚙ settings — update, uninstall, change key (runs install.sh)\x1b[0m\0`);
   } else if (cmd === "stats-cached") {
     // THE selector header — single line, single source of truth, keys always
     // included. One line because the progress pusher must be able to resend it
@@ -1022,7 +1022,7 @@ if (cmd === "preview" || cmd === "list-cached" || cmd === "stats-cached") {
     console.log(lines.join("\n"));
   } else {
     if (process.argv[3] === "__settings__") {
-      console.log("Reopens the pivotal installer menu (bash install.sh):\nchange OpenAI key · update · uninstall · delete cache & config");
+      console.log("Reopens the pivotal installer menu (bash install.sh):\nupdate · uninstall · change OpenAI key · delete cache & config");
       process.exit(0);
     }
     const r = rows.find((x) => x.slug === process.argv[3]);
