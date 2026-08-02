@@ -16,7 +16,7 @@ _but thus far, I'm choosing to keep and extend it as much as possible until I ru
 
 <img width="1452" height="551" alt="Screenshot 2026-08-02 at 3 37 00 PM" src="https://github.com/user-attachments/assets/1f1dbed0-b4a8-452d-b518-b12acb0e0d76" />
 
-why not openclaw?
+**why not openclaw?**__
 
 the first time I used it, it ate an absurd amount of tokens and then proceeded to accidentally wipe my entire work for the day. i think claude code's context isolation is better, although the lack of fluidity between work is something I've tried to strike a balance with in pivotal. 
 
