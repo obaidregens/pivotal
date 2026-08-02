@@ -643,7 +643,13 @@ async function buildBlurb(row: TopicRow, digests: DigestCache, staleOk = false):
     .slice(0, BLURB_SESSION_CAP)
     .reverse(); // cap keeps the most recent N, but the narrative reads oldest → newest
   const BLURB_PROMPT_V = "v4-compact-summaries"; // bump to invalidate cached briefings on prompt change
-  const hash = sha(BLURB_PROMPT_V + members.map((d) => d.id + d.mtimeMs).join(","));
+  // Hot-session exclusion: a session active in the last 30min changes with every
+  // message — hashing it would rebuild this briefing on every settle cycle while
+  // the user works. Hot sessions still appear in the CONTENT of any rebuild;
+  // they just don't TRIGGER one. The briefing refreshes when the session cools.
+  const HOT_MS = 30 * 60_000;
+  const settled = members.filter((d) => Date.now() - Date.parse(d.end) > HOT_MS);
+  const hash = sha(BLURB_PROMPT_V + settled.map((d) => d.id + d.mtimeMs).join(","));
   const blurbs = loadJson<BlurbCache>(BLURBS_PATH, {});
   if (blurbs[row.slug]?.hash === hash) return blurbs[row.slug].blurb;
   if (staleOk && blurbs[row.slug]?.blurb) {
