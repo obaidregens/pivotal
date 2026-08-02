@@ -191,7 +191,7 @@ deploy_prod_copy() {
   sed -i '' "s|\$HOME/Workspace/pivotal/pivotal.ts|$PROD_DIR/pivotal.ts|g" \
     "$PROD_DIR/pivotal.zsh" "$PROD_DIR/plugin/hooks/hooks.json" 2>/dev/null || true
   sed -i '' "s|\${PIVOTAL_SCRIPT:-[^}]*}|\${PIVOTAL_SCRIPT:-$PROD_DIR/pivotal.ts}|" "$PROD_DIR/pivotal.zsh"
-  note "app copied to $PROD_DIR"
+  say "app copied to $PROD_DIR"
 }
 
 prod_install() {
