@@ -39,6 +39,7 @@ bootstrap_clone() {  # sets DIR to a fresh shallow clone
 
 say()  { printf '\033[1m%s\033[0m\n' "$*"; }
 note() { printf '  %s\n' "$*"; }
+dim()  { printf '  \033[90m%s\033[0m\n' "$*"; }  # light gray — secondary info
 
 # ---------- hook management ---------------------------------------------------
 settings_hook() {  # $1 = add | remove ; PIVOTAL_HOOK_CMD used on add
@@ -64,7 +65,7 @@ plugin_hook() {  # $1 = add | remove, $2 = marketplace root (for add)
   if [ "$1" = add ]; then
     claude plugin marketplace add "$2" >/dev/null 2>&1 || true
     claude plugin install pivotal@pivotal >/dev/null 2>&1 || return 1
-    note "Stop hook installed as plugin: pivotal@pivotal"
+    say "Stop hook installed as plugin: pivotal@pivotal"
   else
     claude plugin uninstall pivotal@pivotal >/dev/null 2>&1 || return 1
   fi
@@ -92,7 +93,7 @@ wired_zsh_path() {  # echoes the pivotal.zsh path currently sourced from ~/.zshr
 wire_shell() {  # $1 = app dir
   if ! grep -q "pivotal.zsh" "$HOME/.zshrc" 2>/dev/null; then
     printf '\n# pivotal: topic selector (down-arrow on empty line, or Ctrl+T)\nsource %s/pivotal.zsh\n' "$1" >> "$HOME/.zshrc"
-    note "added source line to ~/.zshrc"
+    say "added source line to ~/.zshrc"
   fi
 }
 
@@ -137,9 +138,9 @@ write_config() {  # $1 = provider, $2 = key, $3 = source
 }
 
 show_savings() {
-  note "Luna \$0.20/\$1.20 per 1M tokens vs Claude Sonnet \$3/\$15 —"
-  note "≈15× cheaper input, ≈12.5× cheaper output. Full-history index:"
-  note "≈\$0.10 on Luna vs ≈\$1.50 on Sonnet; live background updates: pennies/month."
+  dim "Luna \$0.20/\$1.20 per 1M tokens vs Claude Sonnet \$3/\$15 —"
+  dim "≈15× cheaper input, ≈12.5× cheaper output. Full-history index:"
+  dim "≈\$0.10 on Luna vs ≈\$1.50 on Sonnet; live background updates: pennies/month."
 }
 
 setup_provider() {
