@@ -348,13 +348,13 @@ else MENU_HEADER='Not installed (cache/config kept) — pick an action (Esc quit
 
 choice=$(menu_pick "${opts[@]}") || { note "no action."; exit 0; }
 case "$choice" in
-  *key*|key)
+  "Add/Change OpenAI key"|key)
     change_key ;;
   "Install production"|install-prod)
     [ "$IN_CHECKOUT" = 0 ] && bootstrap_clone
     if [ "$DEV_WIRED" = 1 ]; then unwire_any; note "dev wiring removed — checkout untouched"; fi
     prod_install ;;
-  *update*|*Refresh*|*Update*|update)
+  "Install update"*|"Refresh production from this checkout"|"Update production (fetch latest)"|update)
     [ "$IN_CHECKOUT" = 0 ] && bootstrap_clone
     do_update ;;
   "Uninstall dev version (keeps project files)"|uninstall-dev)
