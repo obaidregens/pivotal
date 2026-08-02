@@ -350,10 +350,15 @@ function classifyPrompt(digests: DigestCache, chunk: string[], topicSnapshot: st
       const content = d.compactSummary
         ? `summary: ${trunc(d.compactSummary.replace(/\s+/g, " "), SESSION_CHARS)}`
         : `prompts: ${trunc(d.prompts.join(" | "), SESSION_CHARS)}`;
-      return `### ${id}\nproject: ${d.project}${d.title ? `\ntitle: ${d.title}` : ""}\n${content}`;
+      return `### ${id}\nwhen: ${d.start.slice(0, 10)}\nproject: ${d.project}${d.title ? `\ntitle: ${d.title}` : ""}\n${content}`;
     })
     .join("\n");
   return `You group Claude Code sessions into durable topics of activity — a universal personal knowledge base, NOT just code projects. Sessions include coding, but also research and questions, writing and publishing, running tasks through connected tools (email, calendars, design, data lookup, social media), system administration, and one-off investigations. A topic is a durable area of activity or interest ("Hiccupbot Instagram bot", "LLM pricing research", "Email and domain administration", "LinkedIn content writing"), not a per-task label. Reuse existing topics whenever they fit; create new ones sparingly.
+
+Weigh these signals when assigning:
+- project dir is a strong prior: sessions in different specific project directories are usually different topics, even when they mention the same tools. Exceptions exist (an effort genuinely spanning repos), but they need content evidence. Home (~), /tmp, and scratch/sandbox dirs carry NO dir signal — classify those purely by subject.
+- dates matter: a topic is usually one contiguous run of work. Sessions separated by a month or more belong together only when they clearly continue the same goal; superficial similarity (both mention Claude, both are installers) is not continuation — prefer a separate topic.
+- assign by the session's GOAL, not by tools it happens to use. Almost every session touches Claude/AI tooling — that alone never justifies a Claude-related topic. Never stretch a broad topic to fit a session when a narrower one (existing or new) matches its actual goal.
 
 EXISTING TOPICS:
 ${topicSnapshot || "(none yet)"}
@@ -444,6 +449,15 @@ const writeProgress = (phase: string, done: number, total: number) => {
 const clearProgress = () => { try { unlinkSync(PROGRESS_PATH); } catch {} };
 
 async function classifySessions(digests: DigestCache, ids: string[], cache: TopicsCache) {
+  // chunk coherently: scan order shuffles projects and eras across chunks, so
+  // the model never sees a cluster whole. Sort by project dir, then start time —
+  // each chunk becomes a few contiguous runs of related work.
+  ids = [...ids].sort((a, b) => {
+    const da = digests[a], db = digests[b];
+    return da.project === db.project
+      ? Date.parse(da.start) - Date.parse(db.start)
+      : da.project < db.project ? -1 : 1;
+  });
   const chunks: string[][] = [];
   for (let i = 0; i < ids.length; i += CLASSIFY_CHUNK) chunks.push(ids.slice(i, i + CLASSIFY_CHUNK));
   const topicSnapshot = () =>
@@ -882,6 +896,7 @@ if (cmd === "gate-select") {
   // via the widget's focus binding.
   const PROGRESS = join(CACHE_DIR, "progress.json");
   const slug = process.argv[3] ?? "";
+  if (slug === "__settings__") { console.log("accept"); process.exit(0); } // no briefing needed
   let busy = false;
   const prog = loadJson<{ ts?: number }>(PROGRESS, {});
   if (prog.ts && Date.now() - prog.ts < 10 * 60_000) busy = true;
@@ -977,6 +992,8 @@ if (cmd === "preview" || cmd === "list-cached" || cmd === "stats-cached") {
       // Selected: both lines turn equally orange (title keeps its bold weight).
       process.stdout.write(`${r.slug}\t\x1b[1m${r.title}\x1b[0m  \x1b[2m${meta}\x1b[0m\n  ${r.description}\0`);
     }
+    // trailing utility entry — reopens the installer menu (key/update/uninstall)
+    process.stdout.write(`__settings__\t\x1b[2m⚙ settings — key, update, uninstall (runs install.sh)\x1b[0m\0`);
   } else if (cmd === "stats-cached") {
     // THE selector header — single line, single source of truth, keys always
     // included. One line because the progress pusher must be able to resend it
@@ -1004,6 +1021,10 @@ if (cmd === "preview" || cmd === "list-cached" || cmd === "stats-cached") {
     }
     console.log(lines.join("\n"));
   } else {
+    if (process.argv[3] === "__settings__") {
+      console.log("Reopens the pivotal installer menu (bash install.sh):\nchange OpenAI key · update · uninstall · delete cache & config");
+      process.exit(0);
+    }
     const r = rows.find((x) => x.slug === process.argv[3]);
     if (!r) { console.error("unknown slug"); process.exit(1); }
     const blurbs = loadJson<BlurbCache>(BLURBS_PATH, {});

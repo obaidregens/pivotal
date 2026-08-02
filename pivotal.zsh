@@ -97,7 +97,11 @@ _pivotal-widget() {
   if [[ -n $slug ]]; then
     # ${(q)...}: shell-quote — slugs are model-generated, never trust for eval.
     # accept-line (vs exec) puts the command in history as a real, rerunnable entry.
-    BUFFER="bun ${(q)PIVOTAL_SCRIPT} continue ${(q)slug}"
+    if [[ $slug == __settings__ ]]; then
+      BUFFER="bash ${(q)${PIVOTAL_SCRIPT:h}}/install.sh"
+    else
+      BUFFER="bun ${(q)PIVOTAL_SCRIPT} continue ${(q)slug}"
+    fi
     # PIVOTAL_AUTORUN=0: atuin-style — command lands on the line, Enter is yours
     [[ ${PIVOTAL_AUTORUN:-1} == 1 ]] && zle accept-line
   fi

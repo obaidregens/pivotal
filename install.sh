@@ -23,8 +23,10 @@ REPO_URL="https://github.com/obaidregens/pivotal.git"
 # Am I running inside the dev project (a clone), or as a standalone one-off
 # (e.g. curl | bash)? Dev mode is only offered from inside a real checkout;
 # a one-off bootstrap-clones the repo and installs production from it.
+# .pivotal-prod marker: the prod copy ships install.sh (⚙ settings entry) and
+# would otherwise look exactly like a checkout — never offer dev mode from it.
 IN_CHECKOUT=0
-[ -f "$DIR/pivotal.ts" ] && [ -d "$DIR/plugin" ] && IN_CHECKOUT=1
+[ -f "$DIR/pivotal.ts" ] && [ -d "$DIR/plugin" ] && [ ! -f "$DIR/.pivotal-prod" ] && IN_CHECKOUT=1
 
 bootstrap_clone() {  # sets DIR to a fresh shallow clone
   command -v git >/dev/null || { echo "git required for bootstrap install"; exit 1; }
@@ -195,7 +197,9 @@ deploy_prod_copy() {
   # frozen copy outside the checkout: prod only changes on explicit update,
   # unlike --dev where the live checkout is wired directly
   mkdir -p "$PROD_DIR"
-  cp "$DIR/pivotal.ts" "$DIR/pivotal.zsh" "$PROD_DIR/"
+  # install.sh included: the selector's ⚙ settings entry reopens it from PROD_DIR
+  cp "$DIR/pivotal.ts" "$DIR/pivotal.zsh" "$DIR/install.sh" "$PROD_DIR/"
+  : > "$PROD_DIR/.pivotal-prod"
   rm -rf "$PROD_DIR/plugin" "$PROD_DIR/.claude-plugin"
   cp -R "$DIR/plugin" "$DIR/.claude-plugin" "$PROD_DIR/"
   # point the copy's own references at the copy
