@@ -540,7 +540,10 @@ function sourceSessionsAppendix(row: TopicRow, digests: DigestCache): string {
   // each with a ready resume command so the new session can consult the originals
   const members = row.sessions.map((id) => digests[id]).filter(Boolean);
   const recent = [...members].sort((a, b) => (a.end < b.end ? 1 : -1)).slice(0, 4);
-  const biggest = [...members].sort((a, b) => b.prompts.length - a.prompts.length).slice(0, 2);
+  // substantiality = transcript size on disk — the digest's prompt list is
+  // capped at 8, so its length can't rank sessions beyond that
+  const size = (d: Digest) => { try { return d.path ? statSync(d.path).size : 0; } catch { return 0; } };
+  const biggest = [...members].sort((a, b) => size(b) - size(a)).slice(0, 2);
   const picked = [...new Map([...recent, ...biggest].map((d) => [d.id, d])).values()]
     .sort((a, b) => (a.end < b.end ? 1 : -1));
   if (!picked.length) return "";
