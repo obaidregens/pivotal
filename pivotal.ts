@@ -700,7 +700,7 @@ function launch(row: TopicRow, blurb: string, digests?: DigestCache) {
   stopSpinner();
   const cwd = existsSync(row.project) ? row.project : homedir();
   const prompt = `${BRIEFING_PREFIX} "${row.title}":\n\n${blurb}${digests ? sourceSessionsAppendix(row, digests) : ""}\n\n---\nI'm continuing this work now. Acknowledge briefly, then ask what I want to tackle or suggest the top unresolved thread.`;
-  process.stderr.write(`\nstarting claude in ${cwd}…\n\n`);
+  process.stderr.write(`${ORANGE}❯\x1b[0m \x1b[1m${row.title}\x1b[0m ${ORANGE}— continuing in ${cwd}\x1b[0m\n`);
   spawnSync("claude", [prompt], { cwd, stdio: "inherit", env: { ...process.env, CLAUDECODE: "" } });
 }
 
