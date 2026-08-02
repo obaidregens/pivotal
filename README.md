@@ -1,6 +1,6 @@
 # pivotal
 
-**a new model for agent harnesses: works with claude code, but everything you do is categorized into topics — instead of directories and chat sessions**
+**a new model for agent harnesses: works alongside with claude code, but everything you do is additionally categorized into topics — instead of directories and chat sessions**
 
 ---
 
