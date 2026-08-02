@@ -74,6 +74,24 @@ const displayModel = (m: string) => MODEL_NAMES[m] ?? m;
 // keys guide shown in the selector header — no parens/newlines (fzf action-parser-safe)
 const HEADER_KEYS = "Enter continue · ? details · ^R reanalyze · Esc cancel";
 
+// ---------- launch spinner (tty stderr only) ----------
+const ORANGE = "\x1b[38;5;173m";
+const SPIN_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
+let _spin: ReturnType<typeof setInterval> | null = null;
+let _spinText = "";
+function startSpinner(text: string) {
+  if (!process.stderr.isTTY || _spin) { _spinText = text; return; }
+  _spinText = text;
+  let i = 0;
+  _spin = setInterval(() => {
+    process.stderr.write(`\r${ORANGE}${SPIN_FRAMES[i++ % SPIN_FRAMES.length]} ${_spinText}\x1b[0m\x1b[K`);
+  }, 80);
+}
+const setSpinner = (text: string) => { _spinText = text; };
+function stopSpinner() {
+  if (_spin) { clearInterval(_spin); _spin = null; process.stderr.write("\r\x1b[K"); }
+}
+
 function ago(iso: string): string {
   const s = Math.max(0, (Date.now() - Date.parse(iso)) / 1000);
   if (s < 60) return "just now";
@@ -679,6 +697,7 @@ function launch(row: TopicRow, blurb: string, digests?: DigestCache) {
     console.error("Blurb was generated and cached; rerun once claude is installed.");
     process.exit(1);
   }
+  stopSpinner();
   const cwd = existsSync(row.project) ? row.project : homedir();
   const prompt = `${BRIEFING_PREFIX} "${row.title}":\n\n${blurb}${digests ? sourceSessionsAppendix(row, digests) : ""}\n\n---\nI'm continuing this work now. Acknowledge briefly, then ask what I want to tackle or suggest the top unresolved thread.`;
   process.stderr.write(`\nstarting claude in ${cwd}…\n\n`);
@@ -992,6 +1011,7 @@ if (cmd === "preview" || cmd === "list-cached" || cmd === "stats-cached") {
 // background runs announce themselves before the (silent) digest scan so the
 // picker never shows a bare "0 topics" with no sign of life during cold start
 if (cmd === "warm" || cmd === "reanalyze") writeProgress("indexing sessions", 0, 0);
+if (cmd === "continue") startSpinner("pivotal");
 const { digests, topics } = await refresh();
 const rows = topicRows(digests, topics);
 
@@ -1050,6 +1070,7 @@ if (cmd === "list") {
   try {
     blurb = await buildBlurb(r, digests, true); // staleOk: instant launch, refresh in background
   } catch (e) {
+    stopSpinner();
     console.error(`pivotal: context briefing failed (${e instanceof Error ? e.message.slice(0, 200) : e}).`);
     console.error("Check provider config (~/.claude/cache/pivotal/config.json) or run `cct blurb " + r.slug + "` to retry.");
     process.exit(1);
