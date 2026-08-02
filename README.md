@@ -18,7 +18,7 @@ _but thus far, I'm choosing to keep and extend it as much as possible until I ru
 
 ---
 
-**why not openclaw?**__
+**why not openclaw?**
 
 the first time I used it, it ate an absurd amount of tokens and then proceeded to accidentally wipe my entire work for the day. i think claude code's context isolation is better, although the lack of fluidity between work is something I've tried to strike a balance with in pivotal. 
 
