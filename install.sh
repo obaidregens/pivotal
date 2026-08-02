@@ -353,7 +353,9 @@ fi
 #  · "Uninstall dev version"  — only when dev wiring is detected, from anywhere
 #  · prod actions             — key / update / uninstall as applicable
 opts=()
-[ -f "$CONFIG" ] && opts+=("Add/Change OpenAI key")
+# key management only makes sense against an installed app (installers set the
+# provider themselves; a lone leftover config isn't worth managing)
+{ [ "$PROD_WIRED" = 1 ] || [ "$DEV_WIRED" = 1 ]; } && [ -f "$CONFIG" ] && opts+=("Add/Change OpenAI key")
 if [ "$PROD_WIRED" = 1 ]; then
   if [ "$IN_CHECKOUT" = 1 ] && n=$(update_available); then opts+=("Install update ($n new commits)");
   elif [ "$IN_CHECKOUT" = 1 ]; then opts+=("Refresh production from this checkout");
