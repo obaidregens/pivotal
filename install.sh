@@ -205,6 +205,16 @@ deploy_prod_copy() {
   say "app copied to $PROD_DIR"
 }
 
+handoff_shell() {  # make the fresh wiring live in THIS terminal
+  # the installer is a child of the user's shell and cannot mutate its parent,
+  # so exec an interactive zsh in the installer's place (oh-my-zsh pattern)
+  if [ -z "${PIVOTAL_MENU_CHOICE:-}" ] && [ -t 1 ] && [ -e /dev/tty ] && command -v zsh >/dev/null; then
+    say "done — pivotal is live in this terminal: down-arrow on an empty line."
+    exec zsh -i </dev/tty
+  fi
+  say "done. Open a new terminal (or: exec zsh), press down-arrow on an empty line."
+}
+
 prod_install() {
   say "pivotal install (production)"
   install_deps
@@ -212,7 +222,7 @@ prod_install() {
   deploy_prod_copy
   install_hook "$PROD_DIR" "$PROD_DIR"
   wire_shell "$PROD_DIR"
-  say "done. Open a new terminal (or: exec zsh), press down-arrow on an empty line."
+  handoff_shell
 }
 
 dev_install() {
@@ -221,7 +231,8 @@ dev_install() {
   setup_provider
   install_hook "$DIR" "$DIR"
   wire_shell "$DIR"
-  say "dev install done. Every edit to $DIR is live immediately."
+  note "every edit to $DIR is live immediately."
+  handoff_shell
 }
 
 unwire_any() {  # remove whatever wiring exists (dev or prod); files untouched
