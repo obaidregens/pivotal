@@ -2,9 +2,7 @@
 
 **a new model for agent harnesses: works alongside with claude code, but everything you do is additionally categorized into topics — instead of directories and chat sessions**
 
-## thesis
-
----
+## _thesis_
 
 claude code is being used for a lot more than coding now. I do everything from learning and research to connecting mcps and handling my mail._
 
