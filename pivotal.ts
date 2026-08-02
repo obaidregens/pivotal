@@ -49,6 +49,7 @@ type Digest = {
   end: string;
   prompts: string[];
   lastAssistant: string;
+  title?: string; // Claude Code's own ai-title for the session (free, high quality)
 };
 type DigestCache = Record<string, Digest>; // key: sessionId
 type Topic = { slug: string; title: string; description: string };
@@ -160,6 +161,7 @@ function extractDigest(file: string, id: string, mtimeMs: number): Digest | null
   let start = "", end = "";
   const prompts: string[] = [];
   let lastAssistant = "";
+  let title = "";
   let lines: string[];
   try { lines = readFileSync(file, "utf8").split("\n"); } catch { return null; }
   for (const line of lines) {
@@ -169,6 +171,7 @@ function extractDigest(file: string, id: string, mtimeMs: number): Digest | null
     if (e.isSidechain || e.isMeta) continue;
     if (e.cwd && !project) project = e.cwd;
     if (e.timestamp) { if (!start) start = e.timestamp; end = e.timestamp; }
+    if (e.type === "ai-title" && e.aiTitle) title = e.aiTitle;
     if (e.type === "user") {
       const c = e.message?.content;
       let text = "";
@@ -193,7 +196,7 @@ function extractDigest(file: string, id: string, mtimeMs: number): Digest | null
     prompts.length <= MAX_PROMPTS_PER_SESSION
       ? prompts
       : [...prompts.slice(0, MAX_PROMPTS_PER_SESSION / 2), "[…]", ...prompts.slice(-MAX_PROMPTS_PER_SESSION / 2)];
-  return { id, project, mtimeMs, start, end, prompts: kept, lastAssistant: trunc(lastAssistant.replace(/\s+/g, " "), ASSISTANT_TRUNC) };
+  return { id, project, mtimeMs, start, end, prompts: kept, lastAssistant: trunc(lastAssistant.replace(/\s+/g, " "), ASSISTANT_TRUNC), ...(title ? { title } : {}) };
 }
 
 function updateDigests(): { digests: DigestCache; changed: string[] } {
@@ -265,7 +268,7 @@ function classifyPrompt(digests: DigestCache, chunk: string[], topicSnapshot: st
   const sessions = chunk
     .map((id) => {
       const d = digests[id];
-      return `### ${id}\nproject: ${d.project}\nprompts: ${trunc(d.prompts.join(" | "), SESSION_CHARS)}`;
+      return `### ${id}\nproject: ${d.project}${d.title ? `\ntitle: ${d.title}` : ""}\nprompts: ${trunc(d.prompts.join(" | "), SESSION_CHARS)}`;
     })
     .join("\n");
   return `You group Claude Code sessions into durable topics of activity — a universal personal knowledge base, NOT just code projects. Sessions include coding, but also research and questions, writing and publishing, running tasks through connected tools (email, calendars, design, data lookup, social media), system administration, and one-off investigations. A topic is a durable area of activity or interest ("Hiccupbot Instagram bot", "LLM pricing research", "Email and domain administration", "LinkedIn content writing"), not a per-task label. Reuse existing topics whenever they fit; create new ones sparingly.
@@ -541,8 +544,9 @@ function sourceSessionsAppendix(row: TopicRow, digests: DigestCache): string {
     .sort((a, b) => (a.end < b.end ? 1 : -1));
   if (!picked.length) return "";
   const lines = picked.map((d) => {
-    const opened = d.prompts[0]?.slice(0, 90) ?? "";
-    return `- [${d.end.slice(0, 10)}] workspace \`${d.project}\` → \`claude -r ${d.id}\` — "${opened}"`;
+    // Claude Code's own per-session ai-title beats a raw prompt excerpt
+    const label = d.title ?? `"${d.prompts[0]?.slice(0, 90) ?? ""}"`;
+    return `- [${d.end.slice(0, 10)}] ${label} — workspace \`${d.project}\` → \`claude -r ${d.id}\``;
   });
   return `\n\n## Source sessions (most recent / most substantial)
 Claude Code stores sessions per workspace (directory): a session id only resolves when \`claude -r\` runs from its workspace. To consult one, cd to the listed workspace first (e.g. \`cd <workspace> && claude -r <id>\`), or read its transcript directly under ~/.claude/projects/.
