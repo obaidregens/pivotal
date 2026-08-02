@@ -42,8 +42,8 @@ dim()  { printf '  \033[90m%s\033[0m\n' "$*"; }  # light gray — secondary info
 
 welcome() {  # first-contact banner — nothing installed, no cache yet
   printf '\n  \033[1;38;5;173mpivotal\033[0m\n\n'
-  note "a new model for agent harnesses: your directories and sessions"
-  note "unfold into topics, categorized by goal."
+  note "a new model for agent harnesses: everything you do is categorized"
+  note "into topics — instead of directories and chat sessions."
   dim "an experiment, so far."
   printf '\n'
 }
