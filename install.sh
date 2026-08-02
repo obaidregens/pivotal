@@ -286,6 +286,20 @@ do_uninstall() {
   say "uninstalled. Open a new terminal for a clean shell."
 }
 
+delete_cache() {
+  say "delete cache & config"
+  note "removes $CACHE_DIR entirely:"
+  dim "topics, briefings, digests, metrics — rebuilt on next run (costs one LLM pass)"
+  dim "provider config incl. any pasted OpenAI key — re-enter via this menu after"
+  if [ -z "${PIVOTAL_MENU_CHOICE:-}" ]; then
+    printf '  type yes to confirm: '
+    local ans; read -r ans
+    [ "$ans" = yes ] || { note "cancelled."; return; }
+  fi
+  rm -rf "$CACHE_DIR"
+  say "cache & config deleted."
+}
+
 # ---------- entry -------------------------------------------------------------
 if [ "${1:-}" = "--uninstall-hook" ]; then
   remove_hook; note "Stop hook removed."; exit 0
@@ -324,6 +338,9 @@ fi
 if [ "$IN_CHECKOUT" = 1 ] && { [ "$DEV_WIRED" = 0 ] || [ "$WIRED" != "$DIR/pivotal.zsh" ]; }; then
   opts+=("Install dev version (live from this checkout)")
 fi
+if [ -n "$(ls -A "$CACHE_DIR" 2>/dev/null)" ]; then
+  opts+=("Delete cache & config (topics, briefings, provider key)")
+fi
 
 if [ "$PROD_WIRED" = 1 ]; then MENU_HEADER='Existing installation — pick an action (Esc quits)'
 elif [ "$DEV_WIRED" = 1 ]; then MENU_HEADER='Dev installation — pick an action (Esc quits)'
@@ -347,6 +364,8 @@ case "$choice" in
     dev_install ;;
   "Uninstall"|uninstall)
     do_uninstall ;;
+  "Delete cache & config (topics, briefings, provider key)"|delete-cache)
+    delete_cache ;;
   *)
     note "no action." ;;
 esac
