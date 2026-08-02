@@ -98,8 +98,10 @@ wire_shell() {  # $1 = app dir
 }
 
 unwire_shell() {
-  if grep -q "pivotal.zsh" "$HOME/.zshrc" 2>/dev/null; then
-    sed -i '' -e '/# pivotal: topic selector/d' -e '/pivotal\.zsh/d' "$HOME/.zshrc"
+  if grep -qE "pivotal\.zsh|cct\.zsh" "$HOME/.zshrc" 2>/dev/null; then
+    # also scrub legacy cc-topics-era lines (pre-rename installs)
+    sed -i '' -e '/# pivotal: topic selector/d' -e '/pivotal\.zsh/d' \
+              -e '/# cc-topics: topic selector/d' -e '/cct\.zsh/d' "$HOME/.zshrc"
     note "shell integration removed from ~/.zshrc"
   fi
 }
