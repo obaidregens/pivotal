@@ -54,6 +54,7 @@ _pivotal-pick() {
     --preview "bun ${(q)PIVOTAL_SCRIPT} preview {1} 2>&1" \
     --preview-window 'hidden,right:55%,<90(hidden,down:60%),wrap' \
     --bind '?:toggle-preview' --bind 'ctrl-z:ignore' \
+    --bind 'up:transform([ "$FZF_POS" = 1 ] && echo abort || echo up)' \
     --bind "enter:transform(bun ${(q)PIVOTAL_SCRIPT} gate-select {1})" \
     --bind 'focus:change-header()' \
     --bind "ctrl-r:execute-silent(bun ${(q)PIVOTAL_SCRIPT} kick-reanalyze)+change-footer(⟳ reanalyzing — starting…)" \
