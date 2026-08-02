@@ -1,3 +1,4 @@
+<img width="1452" height="551" alt="Screenshot 2026-08-02 at 3 37 00 PM" src="https://github.com/user-attachments/assets/b703688e-60ed-44af-93d3-94af184747de" />
 # pivotal
 
 **a new model for agent harnesses: works alongside with claude code, but everything you do is additionally categorized into topics — instead of directories and chat sessions**
@@ -13,6 +14,8 @@ _but thus far, I'm choosing to keep and extend it as much as possible until I ru
 ---
 
 **`pivotal`** is a new take on the agentic harness model, it views everything you do as a universal workspace, intelligently categorizing it into topics instead of being isolated across workspaces, and empowers claude code to think that way as well.
+
+<img width="1452" height="551" alt="Screenshot 2026-08-02 at 3 37 00 PM" src="https://github.com/user-attachments/assets/1f1dbed0-b4a8-452d-b518-b12acb0e0d76" />
 
 why not openclaw?
 
