@@ -308,7 +308,6 @@ fi
 #  · "Install dev version"    — only when install.sh sits inside the project checkout
 #  · "Uninstall dev version"  — only when dev wiring is detected, from anywhere
 #  · prod actions             — key / update / uninstall as applicable
-say "pivotal"
 opts=()
 [ -f "$CONFIG" ] && opts+=("Add/Change OpenAI key")
 if [ "$PROD_WIRED" = 1 ]; then
