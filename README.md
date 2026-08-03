@@ -52,9 +52,9 @@ bash install.sh   # this install.sh auto-detects project directory and offers "I
 
 ## how it works
 
-It directly installs into your terminal, so ↑ UP ARROW works for terminal history like default not interfering with your keys, but ↓ DOWN ARROW will let you navigate through your topics
+It directly installs into your terminal, so ↑ UP ARROW works for terminal history like default not interfering with your keys, but `↓ DOWN ARROW` will let you navigate through your topics
 
-select any topic with ENTER ⏎ key and it'll open a new chat with a summarization of each topic, next steps and references to original chat sessions used-as-needed.
+select any topic with `ENTER ⏎` key and it'll open a new chat with a summarization of each topic, next steps and references to original chat sessions used-as-needed.
 
 <img width="800" height="452" alt="Screen Recording 2026-08-02 at 8 10 02 PM" src="https://github.com/user-attachments/assets/787494e6-835c-4051-a2be-83bb5ba93af1" />
 
