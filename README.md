@@ -35,9 +35,7 @@ everything is handled by `install.sh`, first time it runs it will walk you throu
 Production (one-off — downloads and sets up the app at `~/.local/share/pivotal`):
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/obaidregens/pivotal/main/install.sh | bash
-# (repo currently private — until it's public, use:)
-gh repo clone obaidregens/pivotal /tmp/pivotal && bash /tmp/pivotal/install.sh
+curl -fsSL https://pivotal.obaid.wtf/install.sh | bash
 ```
 
 Development (clone anywhere; every edit is live immediately):
