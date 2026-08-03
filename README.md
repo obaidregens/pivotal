@@ -4,6 +4,8 @@
 \
 doesn't interfere with claude code, but give you more options: everything you do is additionally categorized into topics — instead of directories and chat sessions
 
+quick install: `curl -fsSL https://pivotal.obaid.wtf/install.sh | bash`
+
 ----
 
 _thesis: claude code is being used for a lot more than coding now. I do everything from learning and research to connecting mcps and handling my mail._
