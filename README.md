@@ -22,7 +22,7 @@ curl -fsSL https://pivotal.obaid.wtf/install.sh | bash
 - "compressed images to jpeg2000"
 - "built pivotal tool, a claude universal knowledge-base"
 
--> automatically combines context across all chats dealing with the topic so resumption is fully batteries-charged
+-> additionally, automatically combines context across all chats dealing with the topic so resumption is fully batteries-charged
 
 <img width="800" height="465" alt="Screen Recording 2026-08-02" src="https://github.com/user-attachments/assets/5a01a994-85bf-4600-b738-e5201f817648" />
 ---
