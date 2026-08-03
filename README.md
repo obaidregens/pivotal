@@ -2,24 +2,20 @@
 
 ☀️ **a new universal-workspace model for agent harnesses**
 \
-doesn't interfere with claude code, but give you more options: everything you do is additionally categorized into topics — instead of directories and chat sessions
+everything you do on claude code is categorized into topics so you can resume work easier and efficiently combine context of the same work across chats. doesn't interfere with claude code.
 
 quick install for non-readers:
 ```sh
 curl -fsSL https://pivotal.obaid.wtf/install.sh | bash
 ```
 
-----
+Before:
+-> you compressed images into a hyper-niche jpeg2000 format with claude code before. need to compress another.
+-> can't remember which directory claude launched in so need to look through every single active directories' /resume.
 
-_thesis: claude code is being used for a lot more than coding now. I do everything from learning and research to connecting mcps and handling my mail._
-
-_and the assumed model of project directories and chat sessions with fresh contexts has become limiting enough for me that I've almost considered breaking claude code to roll my own harness. almost._
-
-_but thus far, I'm choosing to keep and extend it as much as possible until I run into a wall._
-
----
-
-**`pivotal`** is a new take on the agentic harness model, it views everything you do as a universal workspace, intelligently categorizing it into topics instead of being isolated across workspaces, and empowers claude code to think that way as well.
+Now:
+-> Recall and select work you've done across any codebase, "did research on user me@obaid.wtf", "compressed images to jpeg2000", "built pivotal tool, a claude universal knowledge-base"
+-> automatically combines context across all chats dealing with the topic so resumption is fully batteries-charged
 
 <img width="800" height="465" alt="Screen Recording 2026-08-02" src="https://github.com/user-attachments/assets/5a01a994-85bf-4600-b738-e5201f817648" />
 ---
