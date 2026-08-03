@@ -21,8 +21,7 @@ _but thus far, I'm choosing to keep and extend it as much as possible until I ru
 
 **`pivotal`** is a new take on the agentic harness model, it views everything you do as a universal workspace, intelligently categorizing it into topics instead of being isolated across workspaces, and empowers claude code to think that way as well.
 
-<img width="1452" height="551" alt="Screenshot 2026-08-02 at 3 37 00 PM" src="https://github.com/user-attachments/assets/1f1dbed0-b4a8-452d-b518-b12acb0e0d76" />
-
+<img width="800" height="465" alt="Screen Recording 2026-08-02" src="https://github.com/user-attachments/assets/5a01a994-85bf-4600-b738-e5201f817648" />
 ---
 
 **why not openclaw?**
