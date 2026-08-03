@@ -2,7 +2,7 @@
 
 ☀️ **a new universal-workspace model for agent harnesses**
 \
-everything you do on claude code is categorized into topics so you can resume work easier and efficiently combine context of the same work across chats. doesn't interfere with claude code.
+this tool will categorize everything you do on claude code into topics so you can resume work easier and efficiently combine context of the same work across chats. doesn't interfere with claude code.
 
 quick install for non-readers:
 ```sh
