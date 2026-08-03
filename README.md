@@ -1,8 +1,8 @@
 # pivotal
 
 ☀️ **a new universal-workspace model for agent harnesses**
-\
-no jargon explanation:
+
+_no jargon explanation:_
 \
 this tool will categorize everything you do on claude code into topics so you can resume work easier and efficiently combine context of the same work across chats. doesn't interfere with claude code.
 
