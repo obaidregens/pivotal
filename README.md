@@ -28,12 +28,6 @@ curl -fsSL https://pivotal.obaid.wtf/install.sh | bash
 
 ---
 
-**why not openclaw?**
-
-the first time I used it, it ate an absurd amount of tokens and then proceeded to accidentally wipe my entire work for the day. i think claude code's context isolation is better, although the lack of fluidity between work is something I've tried to strike a balance with in pivotal. 
-
-feel free to hammer me with all the detailed reasoning for why pivotal is reinventing the openclaw wheel, i might not reply but I will read all of it earnestly and think about it deeply.
-
 i've worked extremely carefully myself to make the UX as delightful and simple as I always do, and the `install.sh` experience is part of it
  
 ## Install
@@ -67,6 +61,12 @@ select any topic with ENTER ⏎ key and it'll open a new chat with a summarizati
 the `install.sh` and permanent help badge after should be pretty self-explanatory hand-holding! but if you go off a wrong path or something is not extremely explanatory just dm me on twitter @wtfobaid or text @ +1 940-745-8318 with a link to the repo and what you went through.
 
 but if you still want the full deets i'll hand it off to an LLM to explain further
+
+**why not openclaw?**
+
+the first time I used it, it ate an absurd amount of tokens and then proceeded to accidentally wipe my entire work for the day. i think claude code's context isolation is better, although the lack of fluidity between work is something I've tried to strike a balance with in pivotal. 
+
+feel free to hammer me with all the detailed reasoning for why pivotal is reinventing the openclaw wheel, i might not reply but I will read all of it earnestly and think about it deeply.
 
 ---
 
