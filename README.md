@@ -9,10 +9,10 @@ quick install for non-readers:
 curl -fsSL https://pivotal.obaid.wtf/install.sh | bash
 ```
 
-Before:
+**Before:**
 \
 -> you compressed images into a hyper-niche jpeg2000 format with claude code before. need to compress another.
-
+\
 -> can't remember which directory claude launched in so need to look through every single active directories' /resume.
 
 Now:
