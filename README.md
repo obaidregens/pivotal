@@ -2,7 +2,7 @@
 
 ☀️ **a new universal-workspace model for agent harnesses**
 \
-> [blog post](https://obaid.wtf/jotbook/2026/08/02/announcing-pivotal.html)
+\> [blog post](https://obaid.wtf/jotbook/2026/08/02/announcing-pivotal.html)
 
 _no jargon explanation:_
 \
