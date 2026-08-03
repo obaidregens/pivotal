@@ -18,11 +18,11 @@ curl -fsSL https://pivotal.obaid.wtf/install.sh | bash
 **Now:**
 \
 -> Recall and select work you've done across any codebase
-- "did research on user me@obaid.wtf"
+- "did research on user me@obaid.wtf"\
 - "compressed images to jpeg2000"
 - "built pivotal tool, a claude universal knowledge-base"
 
--> additionally, automatically combines context across all chats dealing with the topic so resumption is fully batteries-charged
+-> as a plus, automatically combines context across all chats dealing with the topic so when you resume it's fully batteries-charged
 
 <img width="800" height="465" alt="Screen Recording 2026-08-02" src="https://github.com/user-attachments/assets/5a01a994-85bf-4600-b738-e5201f817648" />
 ---
