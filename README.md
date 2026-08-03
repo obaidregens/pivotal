@@ -6,7 +6,7 @@ doesn't interfere with claude code, but give you more options: everything you do
 
 quick install for non-readers:
 ```diff
-- curl -fsSL https://pivotal.obaid.wtf/install.sh | bash
+curl -fsSL https://pivotal.obaid.wtf/install.sh | bash
 ```
 
 ----
