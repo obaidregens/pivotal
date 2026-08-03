@@ -62,6 +62,12 @@ the `install.sh` and permanent help badge after should be pretty self-explanator
 
 but if you still want the full deets i'll hand it off to an LLM to explain further
 
+---
+
+---
+
+---
+
 ## LLM-explanation
 
 `install.sh` is checkout-aware: run from inside a clone it offers dev mode and
