@@ -1,6 +1,6 @@
-# pivotal
+# pivotal ☀️
 
-☀️ **a new universal-workspace model for agent harnesses**
+**a new universal-workspace model for agent harnesses**
 
 _no jargon explanation:_
 \
