@@ -18,7 +18,7 @@ curl -fsSL https://pivotal.obaid.wtf/install.sh | bash
 **Now:**
 \
 -> Recall and select work you've done across any codebase
-- "did research on user me@obaid.wtf"\
+- "did research on user me@obaid.wtf"
 - "compressed images to jpeg2000"
 - "built pivotal tool, a claude universal knowledge-base"
 
