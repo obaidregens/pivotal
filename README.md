@@ -2,7 +2,9 @@
 
 ☀️ **a new universal-workspace model for agent harnesses**
 \
-no jargon explanation: **this tool will categorize everything you do on claude code into topics so you can resume work easier and efficiently combine context of the same work across chats. doesn't interfere with claude code.**
+no jargon explanation:
+
+this tool will categorize everything you do on claude code into topics so you can resume work easier and efficiently combine context of the same work across chats. doesn't interfere with claude code.
 
 quick install for non-readers:
 ```sh
