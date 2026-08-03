@@ -56,7 +56,7 @@ It directly installs into your terminal, so ↑ UP ARROW works for terminal hist
 
 select any topic with ENTER ⏎ key and it'll open a new chat with a summarization of each topic, next steps and references to original chat sessions used-as-needed.
 
-<img width="766" height="78" alt="Screenshot 2026-08-02 at 5 42 00 PM" src="https://github.com/user-attachments/assets/277fa5c1-ef08-46d7-a4a7-2b10cc3d7a21" />
+<img width="800" height="581" alt="Screen Recording 2026-08-02 at 8 10 02 PM" src="https://github.com/user-attachments/assets/82118ce0-05a0-4833-ac5b-7cd6d1df4146" />
 
 the `install.sh` and permanent help badge after should be pretty self-explanatory hand-holding! but if you go off a wrong path or something is not extremely explanatory just dm me on twitter @wtfobaid or text @ +1 940-745-8318 with a link to the repo and what you went through.
 
