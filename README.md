@@ -24,13 +24,14 @@ the first time I used it, it ate an absurd amount of tokens and then proceeded t
 
 feel free to hammer me with all the detailed reasoning for why pivotal is reinventing the openclaw wheel, i might not reply but I will read all of it earnestly and think about it deeply.
 
-i've worked extremely carefully myself to make the UX as delightful and simple as I always do, but i will hand it off to the LLM now to help you with onboarding
+i've worked extremely carefully myself to make the UX as delightful and simple as I always do, and the `install.sh` experience is part of it
  
 ## Install
 
-everything is handled by `install.sh`, first time it runs it will walk you through the installation, and the next time it will detect your set up and give you configuration options as well as cleanly uninstalling or changing from prod to dev mode.
+everything is handled by `install.sh`, first time it runs it will walk you through the installation, and the next time it will detect your set up and give you configuration options as well as cleanly uninstalling or changing your installation from prod to dev (realtime changes reflected) mode.
 
 <img width="656" height="233" alt="Screenshot 2026-08-02 at 3 41 55 PM" src="https://github.com/user-attachments/assets/806ee214-35e3-4428-94e3-efdf9c7c0595" />
+
 
 Production (one-off — downloads and sets up the app at `~/.local/share/pivotal`):
 
@@ -42,8 +43,14 @@ Development (clone anywhere; every edit is live immediately):
 
 ```sh
 git clone https://github.com/obaidregens/pivotal.git && cd pivotal
-bash install.sh   # menu offers "Install dev version"
+bash install.sh   # this install.sh auto-detects project directory and offers "Install dev version"
 ```
+
+the `install.sh` should be pretty self-explanatory hand-holding! if you go off a wrong path for even a sec or something is not extremely explanatory just dm me on twitter @wtfobaid or text @ +1 940-745-8318 with a link to the repo.
+
+but if you want the full deets i'll hand it off to an LLM to explain further
+
+## LLM-explanation
 
 `install.sh` is checkout-aware: run from inside a clone it offers dev mode and
 uses the clone as the install source; run standalone it bootstrap-clones the
@@ -69,7 +76,7 @@ bun ~/Workspace/pivotal/pivotal.ts blurb <slug>   # print a topic's context blur
 bun ~/Workspace/pivotal/pivotal.ts rebuild  # drop caches, reclassify everything
 ```
 
-## Shell integration (installed by default via ~/.zshrc)
+### Shell integration (installed by default via ~/.zshrc)
 
 `pivotal.zsh` is sourced from `~/.zshrc` and provides:
 
@@ -84,7 +91,7 @@ loads the cached blurb, and starts `claude` in that topic's project directory
 with the blurb as the opening prompt. The selector itself is cache-only
 (`list-cached` / `preview`) — instant, zero LLM calls.
 
-## How it stays token-efficient and up to date
+### How it stays token-efficient and up to date
 
 1. **Local digest stage (no LLM).** Every session `.jsonl` under `~/.claude/projects` is
    parsed locally into a small digest: real user prompts (first + last few, truncated),
@@ -103,7 +110,7 @@ with the blurb as the opening prompt. The selector itself is cache-only
 Every run refreshes incrementally first, so the menu is always current; a run with no
 new sessions costs zero LLM tokens.
 
-## Live updates (pivotal plugin)
+### Live updates (pivotal plugin)
 
 The installer registers a Claude Code **Stop hook** via the `pivotal`
 plugin (canonical path; falls back to a tagged `settings.json` entry when the
