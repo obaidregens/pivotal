@@ -42,6 +42,16 @@ say()  { printf '\033[1m%s\033[0m\n' "$*"; }
 note() { printf '  %s\n' "$*"; }
 dim()  { printf '  \033[90m%s\033[0m\n' "$*"; }  # light gray — secondary info
 
+# Interactive input that survives `curl | bash`: stdin is the script pipe there,
+# so a bare `read` eats script text and the user's typed reply lands in the
+# parent shell after exit (typing "yes" then ran yes(1) — infinite y). Always
+# read from the terminal; no terminal at all → empty reply (prompts cancel).
+ask() {  # ask <read-flags...> <varname>
+  if [ -t 0 ]; then read "$@"
+  elif [ -e /dev/tty ]; then read "$@" < /dev/tty
+  else eval "${!#}=''"; return 1; fi
+}
+
 welcome() {  # first-contact banner — nothing installed, no cache yet
   local w line
   w=$(( ${COLUMNS:-$(tput cols 2>/dev/null || echo 100)} - 2 ))
@@ -172,7 +182,7 @@ setup_provider() {
   say "No working OpenAI key found."
   show_savings
   printf '  Paste an OpenAI API key to use Luna, or press Enter to skip: '
-  read -rs key; echo
+  ask -rs key || true; echo
   if [ -n "$key" ] && validate_key "$key"; then
     say "key valid → using $LUNA_ID"
     write_config openai "$key" "manual"
@@ -279,7 +289,7 @@ change_key() {
   say "Add / change OpenAI key"
   show_savings
   printf '  Paste key (Enter to cancel): '
-  local key; read -rs key; echo
+  local key; ask -rs key || true; echo
   [ -z "$key" ] && { note "cancelled."; return; }
   if validate_key "$key"; then
     write_config openai "$key" "manual"
@@ -319,7 +329,7 @@ delete_cache() {
   dim "provider config incl. any pasted OpenAI key — re-enter via this menu after"
   if [ -z "${PIVOTAL_MENU_CHOICE:-}" ]; then
     printf '  type yes to confirm: '
-    local ans; read -r ans
+    local ans; ask -r ans || true
     [ "$ans" = yes ] || { note "cancelled."; return; }
   fi
   rm -rf "$CACHE_DIR"
