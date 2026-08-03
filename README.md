@@ -71,11 +71,8 @@ the first time I used it, it ate an absurd amount of tokens and then proceeded t
 feel free to hammer me with all the detailed reasoning for why pivotal is reinventing the openclaw wheel, i might not reply but I will read all of it earnestly and think about it deeply.
 
 ## thesis
-claude code is being used for a lot more than coding now. I do everything from learning and research to compressing/converting files, connecting mcps and handling my mail.
+blog post introducing pivotal [here](https://obaid.wtf/jotbook/2026/08/02/announcing-pivotal.html)
 
-so the assumed model of claude code that handles project directories and chat sessions with fresh contexts has become limiting enough for me that I've almost considered breaking claude code to roll my own harness. almost.
-
-but thus far, I'm choosing to keep and extend it as much as possible until I run into the wall
 
 ---
 
