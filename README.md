@@ -4,7 +4,7 @@
 \
 doesn't interfere with claude code, but give you more options: everything you do is additionally categorized into topics — instead of directories and chat sessions
 
-quick install for non-readers: `curl -fsSL https://pivotal.obaid.wtf/install.sh | bash`
+![quick install for non-readers](https://img.shields.io/badge/%E2%9A%A1_quick_install_for_non--readers-d7875f?style=for-the-badge) `curl -fsSL https://pivotal.obaid.wtf/install.sh | bash`
 
 ----
 
