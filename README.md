@@ -74,6 +74,12 @@ feel free to hammer me with all the detailed reasoning for why pivotal is reinve
 
 ---
 
+---
+
+---
+
+---
+
 ## explained by my LLM
 
 `install.sh` is checkout-aware: run from inside a clone it offers dev mode and
