@@ -444,9 +444,29 @@ const writeProgress = (phase: string, done: number, total: number) => {
   } else {
     line = `⟳ ${phase}…`;
   }
-  try { writeFileSync(PROGRESS_PATH, JSON.stringify({ phase, done, total, line, ts: now, phaseStart })); } catch {}
+  try { writeFileSync(PROGRESS_PATH, JSON.stringify({ phase, done, total, line, ts: now, phaseStart, pid: process.pid })); } catch {}
 };
 const clearProgress = () => { try { unlinkSync(PROGRESS_PATH); } catch {} };
+// The live progress record, or null. A record whose writer pid is dead means the
+// run was killed mid-flight (terminal closed, Ctrl+C): clear it AND the warm
+// stamp, so pickers stop saying "indexing" instantly and the stamp-at-start
+// throttle can't block the next shell from resuming the interrupted work.
+const liveProgress = (): { line?: string; ts?: number } | null => {
+  try {
+    const p = JSON.parse(readFileSync(PROGRESS_PATH, "utf8"));
+    if (!p.ts || Date.now() - p.ts > 10 * 60_000) return null;
+    if (p.pid && p.pid !== process.pid) {
+      try { process.kill(p.pid, 0); } catch (e: any) {
+        if (e?.code === "ESRCH") {
+          try { unlinkSync(PROGRESS_PATH); } catch {}
+          try { unlinkSync(join(CACHE_DIR, "warm-stamp")); } catch {}
+          return null;
+        } // EPERM etc: someone else's live process — treat as running
+      }
+    }
+    return p;
+  } catch { return null; }
+};
 
 async function classifySessions(digests: DigestCache, ids: string[], cache: TopicsCache) {
   // chunk coherently: scan order shuffles projects and eras across chunks, so
@@ -894,12 +914,10 @@ if (cmd === "gate-select") {
   // fzf `enter:transform` gate — prints the action fzf should take. Argv[3] is
   // the selected slug (fzf {1}). Red header warnings clear on next navigation
   // via the widget's focus binding.
-  const PROGRESS = join(CACHE_DIR, "progress.json");
   const slug = process.argv[3] ?? "";
   if (slug === "__settings__") { console.log("accept"); process.exit(0); } // no briefing needed
   let busy = false;
-  const prog = loadJson<{ ts?: number }>(PROGRESS, {});
-  if (prog.ts && Date.now() - prog.ts < 10 * 60_000) busy = true;
+  if (liveProgress()) busy = true;
   else {
     try {
       const pid = parseInt(readFileSync(join(CACHE_DIR, "lock.pid"), "utf8"), 10);
@@ -954,8 +972,8 @@ if (cmd === "kick-reanalyze" || cmd === "attach-progress" || cmd === "push-progr
     const cols = parseInt(process.env.FZF_COLUMNS ?? "", 10) || 200;
     let lastSent = "", wasBusy = false, sinceHeartbeat = 0;
     while (true) {
-      const prog = loadJson<{ line?: string; ts?: number }>(PROGRESS, {});
-      const busy = existsSync(PROGRESS) && !!prog.line && Date.now() - (prog.ts ?? 0) < 10 * 60_000;
+      const prog = liveProgress() ?? {};
+      const busy = !!prog.line;
       let line: string;
       if (busy) {
         const full = `${prog.line}  —  ${HEADER_KEYS}`;
@@ -998,9 +1016,9 @@ if (cmd === "preview" || cmd === "list-cached" || cmd === "stats-cached") {
     // THE selector header — single line, single source of truth, keys always
     // included. One line because the progress pusher must be able to resend it
     // via change-header(), and fzf's listen API can't carry newlines.
-    const prog = loadJson<{ line?: string; ts?: number }>(join(CACHE_DIR, "progress.json"), {});
+    const prog = liveProgress() ?? {};
     let info: string;
-    if (prog.line && Date.now() - (prog.ts ?? 0) < 10 * 60_000) {
+    if (prog.line) {
       info = prog.line;
     } else {
       const total = Object.keys(digests).length;
