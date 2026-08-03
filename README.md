@@ -1,6 +1,6 @@
 # pivotal
 
-☀️ **a new universal-workspace model for agent harnesses**\n
+☀️ **a new universal-workspace model for agent harnesses** \n
 doesn't interfere with claude code, but give you more options: everything you do is additionally categorized into topics — instead of directories and chat sessions
 
 ----
