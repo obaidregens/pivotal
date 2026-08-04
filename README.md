@@ -8,34 +8,21 @@ _no jargon explanation:_
 \
 everything you've worked on with claude code, searchable and indexed.
 
-\> you can also forget the concept of project and chats, pivotal categorizes everything into topics:
+you can also forget the concept of project and chats, pivotal categorizes everything into topics:
 
-> "convert xlx of event attendees into csv"
-> "estimate monthly aws bill based on bedrock tokens consumed"
-> "read my whatsapp chats and reply to everyone unread with, obaid will speak to you soon"
-> "building a claude knowledgebase called pivotal"
+\> "convert xlx of event attendees into csv"
+\> "estimate monthly aws bill based on bedrock tokens consumed"
+\> "read my whatsapp chats and reply to everyone unread with, obaid will speak to you soon"
+\> "building a claude knowledgebase called pivotal"
 
-whether they each took 20 sessions, or were 1 message out of a larger chat, are automatically categorized on-install.
+are all automatically found, indexed, categorized, and made accessible directly from your terminal `↓ DOWN ARROW`
+
+doesn't interfere with claude code or any default keymapping.
 
 quick install for non-readers:
 ```sh
 curl -fsSL https://pivotal.obaid.wtf/install.sh | bash
 ```
-
-**Before:**
-\
--> you compressed images into a hyper-niche jpeg2000 format with claude code before. need to compress another.
-
--> can't remember which directory claude launched in so need to look through every single directory's /resume.
-
-**Now:**
-\
--> Recall and select work you've done across any codebase
-- "did research on user me@obaid.wtf"
-- "compressed images to jpeg2000"
-- "built pivotal tool, a claude universal knowledge-base"
-
--> as a plus, automatically combines context across all chats dealing with the topic so when you resume it's fully batteries-charged
 
 <img width="800" height="465" alt="Screen Recording 2026-08-02" src="https://github.com/user-attachments/assets/5a01a994-85bf-4600-b738-e5201f817648" />
 
