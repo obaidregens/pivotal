@@ -5,7 +5,7 @@
 [> blog post](https://obaid.wtf/jotbook/2026/08/02/announcing-pivotal.html)
 
 
-**you can also forget the concept of project and chats, pivotal categorizes everything into topics:**
+**you can forget the concept of project and chats, pivotal categorizes everything into topics:**
 
 \> "convert xlx of event attendees into csv"
 \
