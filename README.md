@@ -1,10 +1,9 @@
 # pivotal
 
-☀️ **a new universal-workspace model for agent harnesses**
+☀️ **everything you've worked on with claude code, globally searchable and indexed.**
 \
 [> blog post](https://obaid.wtf/jotbook/2026/08/02/announcing-pivotal.html)
 
-everything you've worked on with claude code, searchable and indexed.
 
 **you can also forget the concept of project and chats, pivotal categorizes everything into topics:**
 
