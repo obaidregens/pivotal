@@ -66,17 +66,5 @@ It directly installs into your terminal, so so just doing `↓ DOWN ARROW` (unma
 
 the `install.sh` and `pivotal ↓ down arrow to see topics` badge after should make everything pretty self-explanatory hand-holding! but if you go off a wrong path or something is not extremely explanatory just dm me on twitter @wtfobaid or text @ +1 940-745-8318 with a link to the repo and what you went through.
 
-**why not openclaw?**
-
-the first time I used it, it ate an absurd amount of tokens and then proceeded to accidentally wipe my entire work for the day. i think claude code's context isolation is better, although the lack of fluidity between work is something I've tried to strike a balance with in pivotal. 
-
-feel free to hammer me with all the detailed reasoning for why pivotal is reinventing the openclaw wheel, i might not reply but I will read all of it earnestly and think about it deeply.
-
 ## thesis
 blog post introducing pivotal [here](https://obaid.wtf/jotbook/2026/08/02/announcing-pivotal.html)
-
----
-
-```sh
-bash install.sh --uninstall-hook
-```
