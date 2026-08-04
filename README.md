@@ -4,8 +4,6 @@
 \
 [> blog post](https://obaid.wtf/jotbook/2026/08/02/announcing-pivotal.html)
 
-_no jargon explanation:_
-\
 everything you've worked on with claude code, searchable and indexed.
 
 **you can also forget the concept of project and chats, pivotal categorizes everything into topics:**
