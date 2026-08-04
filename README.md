@@ -62,6 +62,8 @@ It directly installs into your terminal, so so just doing `↓ DOWN ARROW` (unma
 \> "deep agentic search" for difficult queries where you don't remember the literal excerpt
 \> topics take ~5min to index on first-install but make it extremely simple to get back into a topic.
 
+**search everything**: just start typing in the picker — every keystroke is a literal full-text search across all your chats (local SQLite FTS5 index, zero tokens, ~25ms). Results show the matching moment with its topic; Enter continues that topic. A pinned `⚡ deep search` row sits above the results — Enter on it launches a Claude agent armed with the index (`pivotal search-json`) that probes vocabulary variants, reads the actual transcripts, and reports ranked findings. Literal search is instant, semantic depth is one keypress away, and there's no embedding pipeline to babysit.
+
 <img width="800" height="452" alt="Screen Recording 2026-08-02 at 8 10 02 PM" src="https://github.com/user-attachments/assets/787494e6-835c-4051-a2be-83bb5ba93af1" />
 
 the `install.sh` and `pivotal ↓ down arrow to see topics` badge after should make everything pretty self-explanatory hand-holding! but if you go off a wrong path or something is not extremely explanatory just dm me on twitter @wtfobaid or text @ +1 940-745-8318 with a link to the repo and what you went through.

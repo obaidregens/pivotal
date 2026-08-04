@@ -10,7 +10,7 @@
 
 #   bash install.sh --uninstall-hook remove only the Stop hook
 #
-# Scriptable: PIVOTAL_MENU_CHOICE=key|update|uninstall bash install.sh
+# Scriptable: PIVOTAL_MENU_CHOICE=key|update|uninstall|delete-cache|remove-key bash install.sh
 set -euo pipefail
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -197,9 +197,47 @@ setup_provider() {
 install_deps() {
   command -v bun >/dev/null || { echo "bun required: curl -fsSL https://bun.sh/install | bash"; exit 1; }
   command -v claude >/dev/null || note "warning: claude CLI not found — needed for the continue flow"
-  if ! command -v fzf >/dev/null; then
-    if command -v brew >/dev/null; then note "installing fzf…"; brew install -q fzf; else
-      echo "fzf required: https://github.com/junegunn/fzf"; exit 1; fi
+}
+
+# Bundled fzf: the selector binary ships inside the app dir (bin/fzf), pinned so
+# the picker's flags (--footer, --listen, transforms) never break on a system
+# fzf that's too old. Deliberately SILENT — from the user's perspective it's
+# just part of the package, not a dependency they should have to think about.
+FZF_VERSION="0.74.2"
+
+vendor_fzf() {  # $1 = app dir; returns 1 on any failure (caller decides fallback)
+  local dest="$1/bin/fzf" os arch asset base tmp sum want
+  [ -x "$dest" ] && "$dest" --version 2>/dev/null | grep -q "^$FZF_VERSION " && return 0
+  case "$(uname -s)" in Darwin) os=darwin ;; Linux) os=linux ;; *) return 1 ;; esac
+  case "$(uname -m)" in arm64|aarch64) arch=arm64 ;; x86_64|amd64) arch=amd64 ;; *) return 1 ;; esac
+  asset="fzf-$FZF_VERSION-${os}_${arch}.tar.gz"
+  base="https://github.com/junegunn/fzf/releases/download/v$FZF_VERSION"
+  tmp="$(mktemp -d)"
+  curl -fsSL -m 90 -o "$tmp/$asset" "$base/$asset" 2>/dev/null || { rm -rf "$tmp"; return 1; }
+  # verify against the release manifest; a failed manifest fetch skips
+  # verification (HTTPS is the baseline), a MISMATCH always rejects
+  want=$(curl -fsSL -m 30 "$base/fzf_${FZF_VERSION}_checksums.txt" 2>/dev/null | grep " $asset\$" | cut -d' ' -f1 || true)
+  if [ -n "$want" ]; then
+    sum=$( (shasum -a 256 "$tmp/$asset" 2>/dev/null || sha256sum "$tmp/$asset") | cut -d' ' -f1)
+    [ "$sum" = "$want" ] || { rm -rf "$tmp"; return 1; }
+  fi
+  tar -xzf "$tmp/$asset" -C "$tmp" fzf 2>/dev/null || { rm -rf "$tmp"; return 1; }
+  mkdir -p "$1/bin"
+  install -m 755 "$tmp/fzf" "$dest"
+  rm -rf "$tmp"
+}
+
+ensure_fzf() {  # $1 = app dir; bundled preferred, PATH fzf is a silent fallback
+  vendor_fzf "$1" && return 0
+  command -v fzf >/dev/null && return 0
+  echo "install failed: could not fetch required components (network needed) — rerun when online"
+  exit 1
+}
+
+bundled_fzf() {  # echoes the fzf to use for the installer's own menus
+  if [ -x "$PROD_DIR/bin/fzf" ]; then echo "$PROD_DIR/bin/fzf"
+  elif [ -x "$DIR/bin/fzf" ]; then echo "$DIR/bin/fzf"
+  elif command -v fzf >/dev/null; then echo fzf
   fi
 }
 
@@ -234,6 +272,7 @@ prod_install() {
   install_deps
   setup_provider
   deploy_prod_copy
+  ensure_fzf "$PROD_DIR"
   install_hook "$PROD_DIR" "$PROD_DIR"
   wire_shell "$PROD_DIR"
   handoff_shell
@@ -243,6 +282,7 @@ dev_install() {
   say "pivotal install (DEVELOPMENT — wired to this checkout: $DIR)"
   install_deps
   setup_provider
+  ensure_fzf "$DIR"
   install_hook "$DIR" "$DIR"
   wire_shell "$DIR"
   note "every edit to $DIR is live immediately."
@@ -265,8 +305,10 @@ dev_uninstall() {
 menu_pick() {  # header reflects real wiring state, set in MENU_HEADER by entry
   if [ "${PIVOTAL_MENU_CHOICE:-}" = "list" ]; then printf '· %s\n' "$@" >&2; return 1; fi
   if [ -n "${PIVOTAL_MENU_CHOICE:-}" ]; then echo "$PIVOTAL_MENU_CHOICE"; return; fi
-  if command -v fzf >/dev/null; then
-    printf '%s\n' "$@" | FZF_DEFAULT_OPTS='' FZF_DEFAULT_OPTS_FILE='' fzf \
+  local fzf_bin
+  fzf_bin=$(bundled_fzf)
+  if [ -n "$fzf_bin" ]; then
+    printf '%s\n' "$@" | FZF_DEFAULT_OPTS='' FZF_DEFAULT_OPTS_FILE='' "$fzf_bin" \
       --height 40% --reverse --no-info \
       --pointer '❯' \
       --color 'bg+:-1,fg+:173,pointer:173,hl:173,hl+:208,gutter:-1' \
@@ -305,6 +347,7 @@ do_update() {
     git -C "$DIR" pull --ff-only && note "pulled." || note "pull failed — continuing with local copy."
   fi
   deploy_prod_copy
+  ensure_fzf "$PROD_DIR"
   install_hook "$PROD_DIR" "$PROD_DIR"
   wire_shell "$PROD_DIR"
   say "updated."
@@ -323,18 +366,38 @@ do_uninstall() {
 }
 
 delete_cache() {
-  say "delete cache & config"
-  note "removes $CACHE_DIR entirely:"
-  dim "topics, briefings, digests, metrics — rebuilt on next run (costs one LLM pass)"
-  dim "provider config incl. any pasted OpenAI key — re-enter via this menu after"
+  # analysis data only — provider config (and any pasted key) survives
+  say "delete cache"
+  note "removes analysis data from $CACHE_DIR:"
+  dim "topics, briefings, digests, search index, metrics — rebuilt on next run (costs one LLM pass)"
+  dim "provider config + OpenAI key are KEPT (separate menu item removes the key)"
   if [ -z "${PIVOTAL_MENU_CHOICE:-}" ]; then
     printf '  type yes to confirm: '
     local ans; ask -r ans || true
     [ "$ans" = yes ] || { note "cancelled."; return; }
   fi
-  rm -rf "$CACHE_DIR"
-  rm -f "$SETTINGS.pivotal-backup"   # hook-edit safety copy — last pivotal trace
-  say "cache & config deleted."
+  find "$CACHE_DIR" -maxdepth 1 -type f ! -name 'config.json' -delete 2>/dev/null
+  say "cache deleted (config kept)."
+}
+
+remove_key() {
+  say "remove OpenAI key"
+  note "clears the key from pivotal's config; provider falls back to Claude (claude -p)"
+  [ -n "${OPENAI_API_KEY:-}" ] && dim "note: OPENAI_API_KEY in your shell env is yours — not touched"
+  if [ -z "${PIVOTAL_MENU_CHOICE:-}" ]; then
+    printf '  type yes to confirm: '
+    local ans; ask -r ans || true
+    [ "$ans" = yes ] || { note "cancelled."; return; }
+  fi
+  # keep the rest of the config; only drop the key and flip the provider
+  bun -e '
+    const p = process.argv[1];
+    const c = JSON.parse(await Bun.file(p).text());
+    delete c.openaiKey;
+    c.provider = "claude";
+    await Bun.write(p, JSON.stringify(c));
+  ' "$CONFIG" 2>/dev/null || printf '{"provider":"claude","claudeModel":"sonnet"}' > "$CONFIG"
+  say "key removed — pivotal now uses Claude until a key is re-added."
 }
 
 # ---------- entry -------------------------------------------------------------
@@ -374,6 +437,7 @@ if { [ "$PROD_WIRED" = 1 ] || [ "$DEV_WIRED" = 1 ]; } && [ -f "$CONFIG" ]; then
   [ "$stored" = env ] && stored="${OPENAI_API_KEY:-}"
   if [ -n "$stored" ]; then
     opts+=("Change OpenAI key (sk-…${stored: -4})")
+    opts+=("Remove OpenAI key (fall back to Claude)")
   else
     opts+=("Add OpenAI key")
   fi
@@ -393,8 +457,9 @@ if [ "$IN_CHECKOUT" = 1 ] && { [ "$DEV_WIRED" = 0 ] || [ "$WIRED" != "$DIR/pivot
   opts+=("Install dev version (live from this checkout)")
 fi
 if [ "$HAS_CACHE" = 1 ]; then
-  opts+=("Delete cache & config (topics, briefings, provider key)")
+  opts+=("Delete cache (topics, briefings, search index — key kept)")
 fi
+opts+=("Read blog post announcing pivotal (opens browser)")
 
 if [ "$PROD_WIRED" = 1 ]; then MENU_HEADER='Existing installation — pick an action (Esc quits)'
 elif [ "$DEV_WIRED" = 1 ]; then MENU_HEADER='Dev installation — pick an action (Esc quits)'
@@ -419,8 +484,15 @@ case "$choice" in
     dev_install ;;
   "Uninstall"|uninstall)
     do_uninstall ;;
-  "Delete cache & config (topics, briefings, provider key)"|delete-cache)
+  "Delete cache (topics, briefings, search index — key kept)"|delete-cache)
     delete_cache ;;
+  "Remove OpenAI key (fall back to Claude)"|remove-key)
+    remove_key ;;
+  "Read blog post announcing pivotal (opens browser)"|blog)
+    POST_URL="https://obaid.wtf/jotbook/2026/08/02/announcing-pivotal"
+    say "announcing pivotal ☀️"
+    note "$POST_URL"
+    open "$POST_URL" 2>/dev/null || xdg-open "$POST_URL" 2>/dev/null || true ;;
   *)
     note "no action." ;;
 esac
