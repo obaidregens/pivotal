@@ -8,7 +8,7 @@ _no jargon explanation:_
 \
 everything you've worked on with claude code, searchable and indexed.
 
-you can also forget the concept of project and chats, pivotal categorizes everything into topics:
+**you can also forget the concept of project and chats, pivotal categorizes everything into topics:**
 
 \> "convert xlx of event attendees into csv"
 \
