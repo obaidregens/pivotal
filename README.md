@@ -25,9 +25,8 @@ are all automatically found, indexed, categorized, and made accessible directly 
 
 doesn't interfere with claude code or any default keymapping.
 
-**install, update, uninstall, and change all from the same one-liner:
+**install, update, uninstall, and change all from the same one-liner:**
 
-**
 ```sh
 curl -fsSL https://pivotal.obaid.wtf/install.sh | bash
 ```
