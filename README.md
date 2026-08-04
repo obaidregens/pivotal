@@ -11,8 +11,11 @@ everything you've worked on with claude code, searchable and indexed.
 you can also forget the concept of project and chats, pivotal categorizes everything into topics:
 
 \> "convert xlx of event attendees into csv"
+\
 \> "estimate monthly aws bill based on bedrock tokens consumed"
+\
 \> "read my whatsapp chats and reply to everyone unread with, obaid will speak to you soon"
+\
 \> "building a claude knowledgebase called pivotal"
 
 are all automatically found, indexed, categorized, and made accessible directly from your terminal `↓ DOWN ARROW`
