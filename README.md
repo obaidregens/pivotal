@@ -17,7 +17,11 @@
 
 are all automatically found, indexed, categorized, and made accessible directly from your terminal. just do `↓ DOWN ARROW`
 
+------
+
 <img width="800" height="465" alt="Screen Recording 2026-08-02" src="https://github.com/user-attachments/assets/5a01a994-85bf-4600-b738-e5201f817648" />
+
+------
 
 doesn't interfere with claude code or any default keymapping.
 
