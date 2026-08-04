@@ -15,7 +15,7 @@
 \
 \> "building a claude knowledgebase called pivotal"
 
-are all automatically found, indexed, categorized, and made accessible directly from your terminal `↓ DOWN ARROW`
+are all automatically found, indexed, categorized, and made accessible directly from your terminal. just do `↓ DOWN ARROW`
 
 doesn't interfere with claude code or any default keymapping.
 
