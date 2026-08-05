@@ -60,7 +60,9 @@ bash install.sh   # this install.sh auto-detects project directory and offers "I
 It directly installs into your terminal, so so just doing `↓ DOWN ARROW` (unmapped key) will let you navigate through your topics like `↑ UP ARROW` does terminal history
 
 \> search through chats by typing
+\
 \> "deep agentic search" for difficult queries where you don't remember the literal excerpt
+\
 \> topics take ~5min to index on first-install but make it extremely simple to get back into a topic.
 
 **search everything**: just start typing in the picker — every keystroke is a literal full-text search across all your chats (local SQLite FTS5 index, zero tokens, ~25ms). Results show the matching moment with its topic; Enter continues that topic. A pinned `⚡ deep search` row sits above the results — Enter on it launches a Claude agent armed with the index (`pivotal search-json`) that probes vocabulary variants, reads the actual transcripts, and reports ranked findings. Literal search is instant, semantic depth is one keypress away, and there's no embedding pipeline to babysit.
