@@ -19,7 +19,8 @@ are all automatically found, indexed, categorized, and made accessible directly 
 
 ------
 
-<img width="960" height="828" alt="first sr" src="https://github.com/user-attachments/assets/20157904-8d32-4205-977f-17c90866d1b4" />
+<img width="960" height="596" alt="first sr cropped" src="https://github.com/user-attachments/assets/186f9b2b-d6e0-4ea8-9e3a-5a2f97e25d0d" />
+
 
 ------
 
