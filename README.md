@@ -19,7 +19,7 @@ are all automatically found, indexed, categorized, and made accessible directly 
 
 ------
 
-<img width="800" height="465" alt="Screen Recording 2026-08-02" src="https://github.com/user-attachments/assets/5a01a994-85bf-4600-b738-e5201f817648" />
+<img width="960" height="828" alt="first sr" src="https://github.com/user-attachments/assets/20157904-8d32-4205-977f-17c90866d1b4" />
 
 ------
 
