@@ -71,5 +71,7 @@ It directly installs into your terminal, so so just doing `↓ DOWN ARROW` (unma
 
 the `install.sh` and `pivotal ↓ down arrow to see topics` badge after should make everything pretty self-explanatory hand-holding! but if you go off a wrong path or something is not extremely explanatory just dm me on twitter @wtfobaid or text @ +1 940-745-8318 with a link to the repo and what you went through.
 
+**something look stuck or empty?** run `pivotal timeline` and paste the output when you reach out — it's a self-contained diagnostic report: your config, cache state, and a second-by-second log of everything pivotal did recently (indexing stages, picker footer updates, background runs, gaps where nothing happened). `pivotal timeline 60` widens the window to an hour, `pivotal timeline all` dumps everything. Recorded locally to `~/.claude/cache/pivotal/timeline.jsonl`, capped at ~4MB, never leaves your machine.
+
 ## thesis
 blog post introducing pivotal [here](https://obaid.wtf/jotbook/2026/08/02/announcing-pivotal.html)

@@ -10,6 +10,39 @@
           }
         ]
       }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun \"$HOME/Workspace/pivotal/pivotal.ts\" touch",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun \"$HOME/Workspace/pivotal/pivotal.ts\" touch",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun \"$HOME/Workspace/pivotal/pivotal.ts\" touch",
+            "timeout": 15
+          }
+        ]
+      }
     ]
   }
 }
