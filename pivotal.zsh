@@ -1,5 +1,5 @@
 # pivotal shell integration — source from ~/.zshrc:
-#   source ~/Workspace/pivotal/pivotal.zsh
+#   source /path/to/pivotal/pivotal.zsh   (install.sh adds this line)
 #
 # Keys:
 #   Down-arrow on EMPTY command line -> topic selector (with text: normal history)
@@ -8,7 +8,8 @@
 #   PIVOTAL_NOBIND=1     -> define widgets only, bind nothing
 #   PIVOTAL_BIND_DOWN=0    -> keep down-arrow unbound; Ctrl+T still bound
 
-PIVOTAL_SCRIPT="${PIVOTAL_SCRIPT:-$HOME/Workspace/pivotal/pivotal.ts}"
+# default: pivotal.ts next to this file (%x = path of the file being sourced)
+PIVOTAL_SCRIPT="${PIVOTAL_SCRIPT:-${${(%):-%x}:A:h}/pivotal.ts}"
 
 # fzf ships bundled with the app (bin/ next to the script) so the picker never
 # depends on — or drifts with — a system fzf; PATH fzf is only a quiet fallback
