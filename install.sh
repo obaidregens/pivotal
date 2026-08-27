@@ -1,7 +1,7 @@
 #!/bin/bash
 # pivotal installer.
 #
-#   curl -fsSL https://pivotal.obaid.wtf/install.sh | bash   one-off: clone + install (or update)
+#   curl -fsSL https://pivotal.obaid.wtf/install.sh | bash   one-off: clone, then the same menu as below
 #   bash install.sh                                          from a checkout or ~/.local/share/pivotal:
 #                                                            state-aware menu (install / update / key / uninstall)
 #   bash install.sh --uninstall-hook                         remove only the Claude Code hooks
@@ -29,22 +29,33 @@ die()  { printf '%s\n' "$*" >&2; exit 1; }
 # would eat script text. Clone once, then re-exec from the file with the
 # terminal on stdin — everything below can assume both. Also used when the
 # prod copy (no checkout) wants to install/update.
-bootstrap() {  # never returns
+bootstrap() {  # never returns; PIVOTAL_BOOTSTRAP carries the temp dir so the re-exec can clean it up
   command -v git >/dev/null || die "git is required"
-  [ -e /dev/tty ] || die "pivotal needs an interactive terminal to install"
+  ( : </dev/tty ) 2>/dev/null || die "pivotal needs an interactive terminal to install"
   local tmp; tmp="$(mktemp -d)"
   say "fetching pivotal…"
   git clone -q --depth 1 "$REPO_URL" "$tmp/pivotal" || die "clone failed: $REPO_URL"
-  PIVOTAL_BOOTSTRAP=1 exec bash "$tmp/pivotal/install.sh" </dev/tty
+  PIVOTAL_BOOTSTRAP="$tmp" exec bash "$tmp/pivotal/install.sh" </dev/tty
 }
 [ -n "${BASH_SOURCE[0]:-}" ] || bootstrap
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 [ -t 0 ] || { ( : </dev/tty ) 2>/dev/null && exec </dev/tty; } || true   # no tty at all (CI): prompts read EOF
 
-# Where am I running from? A real checkout offers dev mode; the prod copy
-# (no .git) and a bootstrap clone (temporary) do not.
-IN_CHECKOUT=0
-[ -d "$DIR/.git" ] && [ -z "${PIVOTAL_BOOTSTRAP:-}" ] && IN_CHECKOUT=1
+# Where am I running from?
+#   HAVE_SRC    — DIR holds fresh app source (a checkout or the bootstrap clone):
+#                 can install/update production from it
+#   IN_CHECKOUT — a real checkout (not the temporary clone): can be wired as dev
+# The prod copy has neither: its install/update actions go through bootstrap.
+HAVE_SRC=0; IN_CHECKOUT=0
+if [ -d "$DIR/.git" ]; then
+  HAVE_SRC=1
+  [ -z "${PIVOTAL_BOOTSTRAP:-}" ] && IN_CHECKOUT=1
+fi
+cleanup_bootstrap() {  # only ever removes the temp dir bootstrap() created
+  [ -n "${PIVOTAL_BOOTSTRAP:-}" ] && [ "$DIR" = "$PIVOTAL_BOOTSTRAP/pivotal" ] && rm -rf "$PIVOTAL_BOOTSTRAP"
+  return 0
+}
+trap cleanup_bootstrap EXIT
 
 # ---------- hooks (Claude Code) -----------------------------------------------
 hook_cmd() {  # $1 = app dir → the hook command line, $HOME-relative when possible
@@ -278,6 +289,7 @@ unwire_all() { remove_hooks; unwire_shell; }
 handoff_shell() {  # make the wiring live in THIS terminal by replacing the installer with a zsh
   if [ -z "${PIVOTAL_MENU_CHOICE:-}" ] && [ -t 1 ] && command -v zsh >/dev/null; then
     say "done — pivotal is live in this terminal: down-arrow on an empty line."
+    cleanup_bootstrap   # exec replaces this process, so the EXIT trap would never run
     exec zsh -i
   fi
   say "done. Open a new terminal (or: exec zsh), press down-arrow on an empty line."
@@ -355,12 +367,6 @@ HAS_CACHE=0; [ -n "$(ls -A "$CACHE_DIR" 2>/dev/null)" ] && HAS_CACHE=1
 
 [ "$MODE" = none ] && [ "$HAS_CACHE" = 0 ] && welcome
 
-# One-off bootstrap: no menu — install, or update an existing production install.
-if [ -n "${PIVOTAL_BOOTSTRAP:-}" ]; then
-  if [ "$MODE" = prod ]; then do_update; else prod_install; fi
-  exit 0
-fi
-
 # Menu: options appear only when they apply.
 opts=()
 if [ "$MODE" != none ] && [ -f "$CONFIG" ]; then
@@ -374,6 +380,7 @@ if [ "$MODE" != none ] && [ -f "$CONFIG" ]; then
 fi
 if [ "$MODE" = prod ]; then
   if [ "$IN_CHECKOUT" = 1 ]; then opts+=("Update production from this checkout")
+  elif [ "$HAVE_SRC" = 1 ]; then opts+=("Update production (latest fetched)")
   else opts+=("Update production (fetch latest)"); fi
   opts+=("Uninstall")
 else
@@ -396,9 +403,9 @@ case "$choice" in
   "Add OpenAI key"|"Change OpenAI key ("*|key)            change_key ;;
   "Remove OpenAI key"*|remove-key)                        remove_key ;;
   "Install production"|install-prod)
-    if [ "$IN_CHECKOUT" = 1 ]; then prod_install; else bootstrap; fi ;;
+    if [ "$HAVE_SRC" = 1 ]; then prod_install; else bootstrap; fi ;;
   "Update production"*|update)
-    if [ "$IN_CHECKOUT" = 1 ]; then do_update; else bootstrap; fi ;;
+    if [ "$HAVE_SRC" = 1 ]; then do_update; else bootstrap; fi ;;
   "Install dev version"*|install-dev)                     dev_install ;;
   "Uninstall dev version"*|uninstall-dev)                 dev_uninstall ;;
   Uninstall|uninstall)                                    do_uninstall ;;
